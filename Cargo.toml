@@ -1,0 +1,16 @@
+[package]
+name = "palimpsest-processor"
+version = "0.1.0"
+authors = ["Ryan1729 <Ryan1729@gmail.com>"]
+
+[workspace]
+
+[dependencies]
+bear-lib-terminal = "1.3.3"
+libloading = "0.3"
+
+[dependencies.state_manipulation]
+path = "./state_manipulation"
+
+[dependencies.common]
+path = "./common"
