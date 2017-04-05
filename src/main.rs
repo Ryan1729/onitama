@@ -1,7 +1,13 @@
-extern crate libloading;
+
 extern crate bear_lib_terminal;
 extern crate common;
 
+#[cfg(unix)]
+extern crate libloading;
+#[cfg(not(unix))]
+extern crate state_manipulation;
+
+#[cfg(unix)]
 use libloading::Library;
 
 use bear_lib_terminal::terminal::{self, config, Event, KeyCode, state};
@@ -12,12 +18,19 @@ use std::mem;
 
 use common::*;
 
+#[cfg(unix)]
 const LIB_PATH: &'static str = "./target/debug/libstate_manipulation.so";
+#[cfg(not(unix))]
+const LIB_PATH: &'static str = "state_manipulation.dll";
 
+#[cfg(unix)]
 struct Application {
     library: Library,
 }
+#[cfg(not(unix))]
+struct Application {}
 
+#[cfg(unix)]
 impl Application {
     fn new() -> Self {
         let library = Library::new(LIB_PATH).unwrap_or_else(|error| panic!("{}", error));
@@ -43,6 +56,25 @@ impl Application {
                 .unwrap();
             f(platform, state, events)
         }
+    }
+}
+#[cfg(not(unix))]
+impl Application {
+    fn new() -> Self {
+        Application {}
+    }
+
+    fn new_state(&self) -> State {
+        state_manipulation::new_state()
+    }
+
+    fn update_and_render(&self,
+                         platform: &Platform,
+                         state: &mut State,
+                         events: &Vec<Event>)
+                         -> bool {
+       let mut new_events: Vec<common::Event> = unsafe {events.iter().map(|a| mem::transmute::<Event, common::Event>(*a)).collect()};
+        state_manipulation::update_and_render(platform, state, &mut new_events)
     }
 }
 
