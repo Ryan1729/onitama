@@ -4,10 +4,18 @@ pub struct Platform {
     pub print_xy: fn(i32, i32, &str),
     pub clear: fn(Option<Rect>),
     pub size: fn() -> Size,
+    pub pick: fn(Point, i32) -> char,
     pub mouse_position: fn() -> Point,
     pub clicks: fn() -> i32,
     pub key_pressed: fn(KeyCode) -> bool,
     pub set_colors: fn(Color, Color),
+    pub get_colors: fn() -> (Color, Color),
+    pub set_foreground: fn(Color),
+    pub get_foreground: fn() -> (Color),
+    pub set_background: fn(Color),
+    pub get_background: fn() -> (Color),
+    pub set_layer: fn(i32),
+    pub get_layer: fn() -> i32,
 }
 
 pub struct State {
