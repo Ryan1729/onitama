@@ -151,11 +151,13 @@ fn main() {
 
         terminal::refresh();
 
-        if let Ok(Ok(modified)) = std::fs::metadata(LIB_PATH).map(|m| m.modified()) {
-            if modified > last_modified {
-                drop(app);
-                app = Application::new();
-                last_modified = modified;
+        if cfg!(unix) {
+            if let Ok(Ok(modified)) = std::fs::metadata(LIB_PATH).map(|m| m.modified()) {
+                if modified > last_modified {
+                    drop(app);
+                    app = Application::new();
+                    last_modified = modified;
+                }
             }
         }
 
