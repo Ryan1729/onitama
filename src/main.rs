@@ -38,10 +38,10 @@ impl Application {
         Application { library: library }
     }
 
-    fn new_state(&self) -> State {
+    fn new_state(&self, size: common::Size) -> State {
         unsafe {
-            let f = self.library.get::<fn() -> State>(b"new_state\0").unwrap();
-            f()
+            let f = self.library.get::<fn(common::Size) -> State>(b"new_state\0").unwrap();
+            f(size)
         }
     }
 
@@ -64,8 +64,8 @@ impl Application {
         Application {}
     }
 
-    fn new_state(&self) -> State {
-        state_manipulation::new_state()
+    fn new_state(&self, size: common::Size) -> State {
+        state_manipulation::new_state(size)
     }
 
     fn update_and_render(&self,
@@ -95,7 +95,7 @@ fn main() {
 
     let mut app = Application::new();
 
-    let mut state = app.new_state();
+    let mut state = app.new_state(size());
 
     let mut last_modified = std::fs::metadata(LIB_PATH).unwrap().modified().unwrap();
 

@@ -1,4 +1,8 @@
+extern crate rand;
+
 use std::fmt;
+
+use rand::StdRng;
 
 pub struct Platform {
     pub print_xy: fn(i32, i32, &str),
@@ -19,7 +23,10 @@ pub struct Platform {
 }
 
 pub struct State {
+    pub rng: StdRng,
+    pub title_screen: bool,
     pub x: i32,
+    pub row: Vec<u8>,
 }
 
 
