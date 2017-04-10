@@ -19,7 +19,7 @@ pub struct Platform {
 }
 
 pub struct State {
-    pub greeting: String,
+    pub x: i32,
 }
 
 
