@@ -245,7 +245,7 @@ fn print_centered_line(platform: &Platform, x: i32, y: i32, w: i32, h: i32, text
     let x_ = {
         let rect_middle = x + (w / 2);
 
-        rect_middle - (text.len() as f32 / 2.0) as i32
+        rect_middle - (text.chars().count() as f32 / 2.0) as i32
     };
 
     let y_ = y + (h / 2);
