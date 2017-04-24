@@ -27,8 +27,51 @@ pub struct State {
     pub title_screen: bool,
     pub x: i32,
     pub row: Vec<u8>,
+    pub direction: Direction,
+    pub ui_context: UIContext,
 }
 
+pub type UiId = i32;
+
+pub struct UIContext {
+    pub hot: UiId,
+    pub active: UiId,
+    pub next_hot: UiId,
+}
+
+impl UIContext {
+    pub fn new() -> Self {
+        UIContext {
+            hot: 0,
+            active: 0,
+            next_hot: 0,
+        }
+    }
+
+    pub fn set_not_active(&mut self) {
+        self.active = 0;
+    }
+    pub fn set_active(&mut self, id: UiId) {
+        self.active = id;
+    }
+    pub fn set_next_hot(&mut self, id: UiId) {
+        self.next_hot = id;
+    }
+    pub fn set_not_hot(&mut self) {
+        self.hot = 0;
+    }
+    pub fn frame_init(&mut self) {
+        if self.active == 0 {
+            self.hot = self.next_hot;
+        }
+        self.next_hot = 0;
+    }
+}
+
+pub enum Direction {
+    Right,
+    Left,
+}
 
 
 
