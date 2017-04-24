@@ -17,20 +17,8 @@ pub fn new_state(size: Size) -> State {
     let seed: &[_] = &[42];
     let mut rng: StdRng = SeedableRng::from_seed(seed);
 
-    let mut row = Vec::new();
-
-    for _ in 0..size.width {
-        row.push(rng.gen::<u8>());
-    }
-
-    State {
-        rng: rng,
-        title_screen: false,
-        x: 0,
-        row: row,
-    }
+    make_state(size, false, rng)
 }
-
 #[cfg(not(debug_assertions))]
 #[no_mangle]
 pub fn new_state(size: Size) -> State {
@@ -44,13 +32,20 @@ pub fn new_state(size: Size) -> State {
     let seed: &[_] = &[timestamp as usize];
     let rng: StdRng = SeedableRng::from_seed(seed);
 
+    make_state(size, true, rng)
+}
+
+
+fn make_state(size: Size, title_screen: bool, mut rng: StdRng) -> State {
+    let mut row = Vec::new();
+
     for _ in 0..size.width {
         row.push(rng.gen::<u8>());
     }
 
     State {
         rng: rng,
-        title_screen: true,
+        title_screen: title_screen,
         x: 0,
         row: row,
     }
