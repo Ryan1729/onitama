@@ -2,12 +2,12 @@
 extern crate bear_lib_terminal;
 extern crate common;
 
-#[cfg(unix)]
+#[cfg(debug_assertions)]
 extern crate libloading;
-#[cfg(not(unix))]
+#[cfg(not(debug_assertions))]
 extern crate state_manipulation;
 
-#[cfg(unix)]
+#[cfg(debug_assertions)]
 use libloading::Library;
 
 use bear_lib_terminal::terminal::{self, config, Event, KeyCode, state};
@@ -18,19 +18,19 @@ use std::mem;
 
 use common::*;
 
-#[cfg(unix)]
+#[cfg(debug_assertions)]
 const LIB_PATH: &'static str = "./target/debug/libstate_manipulation.so";
-#[cfg(not(unix))]
-const LIB_PATH: &'static str = "state_manipulation.dll";
+#[cfg(not(debug_assertions))]
+const LIB_PATH: &'static str = "Hopefully compiled out";
 
-#[cfg(unix)]
+#[cfg(debug_assertions)]
 struct Application {
     library: Library,
 }
-#[cfg(not(unix))]
+#[cfg(not(debug_assertions))]
 struct Application {}
 
-#[cfg(unix)]
+#[cfg(debug_assertions)]
 impl Application {
     fn new() -> Self {
         let library = Library::new(LIB_PATH).unwrap_or_else(|error| panic!("{}", error));
@@ -41,6 +41,7 @@ impl Application {
     fn new_state(&self, size: common::Size) -> State {
         unsafe {
             let f = self.library.get::<fn(common::Size) -> State>(b"new_state\0").unwrap();
+
             f(size)
         }
     }
@@ -58,7 +59,7 @@ impl Application {
         }
     }
 }
-#[cfg(not(unix))]
+#[cfg(not(debug_assertions))]
 impl Application {
     fn new() -> Self {
         Application {}
@@ -97,7 +98,13 @@ fn main() {
 
     let mut state = app.new_state(size());
 
-    let mut last_modified = std::fs::metadata(LIB_PATH).unwrap().modified().unwrap();
+    let mut last_modified = if cfg!(debug_assertions) {
+        std::fs::metadata(LIB_PATH).unwrap().modified().unwrap()
+    } else {
+        //hopefully this is actually compiled out
+        std::time::SystemTime::now()
+    };
+
 
     let platform = Platform {
         print_xy: terminal::print_xy,
@@ -151,7 +158,7 @@ fn main() {
 
         terminal::refresh();
 
-        if cfg!(unix) {
+        if cfg!(debug_assertions) {
             if let Ok(Ok(modified)) = std::fs::metadata(LIB_PATH).map(|m| m.modified()) {
                 if modified > last_modified {
                     drop(app);
