@@ -15,9 +15,9 @@ pub fn new_state(size: Size) -> State {
     println!("debug on");
 
     let seed: &[_] = &[42];
-    let mut rng: StdRng = SeedableRng::from_seed(seed);
+    let rng: StdRng = SeedableRng::from_seed(seed);
 
-    make_state(size, false, rng)
+    make_state(rng)
 }
 #[cfg(not(debug_assertions))]
 #[no_mangle]
@@ -32,23 +32,15 @@ pub fn new_state(size: Size) -> State {
     let seed: &[_] = &[timestamp as usize];
     let rng: StdRng = SeedableRng::from_seed(seed);
 
-    make_state(size, true, rng)
+    make_state(rng)
 }
 
 
-fn make_state(size: Size, title_screen: bool, mut rng: StdRng) -> State {
-    let mut row = Vec::new();
-
-    for _ in 0..size.width {
-        row.push(rng.gen::<u8>());
-    }
+fn make_state(mut rng: StdRng) -> State {
+    rng.gen::<bool>();
 
     State {
-        rng: rng,
-        title_screen: title_screen,
-        x: 0,
-        row: row,
-        direction: Direction::Right,
+        rng,
         ui_context: UIContext::new(),
     }
 }
@@ -56,34 +48,6 @@ fn make_state(size: Size, title_screen: bool, mut rng: StdRng) -> State {
 #[no_mangle]
 //returns true if quit requested
 pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Vec<Event>) -> bool {
-    if state.title_screen {
-
-        for event in events {
-            cross_mode_event_handling(platform, state, event);
-            match *event {
-                Event::Close |
-                Event::KeyPressed { key: KeyCode::Escape, ctrl: _, shift: _ } => return true,
-                Event::KeyPressed { key: _, ctrl: _, shift: _ } => state.title_screen = false,
-                _ => (),
-            }
-        }
-
-
-        state.x += 1;
-        state.x %= 80;
-
-        draw(platform, state);
-
-        false
-    } else {
-        game_update_and_render(platform, state, events)
-    }
-}
-
-pub fn game_update_and_render(platform: &Platform,
-                              state: &mut State,
-                              events: &mut Vec<Event>)
-                              -> bool {
     let mut left_mouse_pressed = false;
     let mut left_mouse_released = false;
 
@@ -91,78 +55,49 @@ pub fn game_update_and_render(platform: &Platform,
         cross_mode_event_handling(platform, state, event);
 
         match *event {
-            Event::KeyPressed { key: KeyCode::MouseLeft, ctrl: _, shift: _ } => {
+            Event::KeyPressed {
+                key: KeyCode::MouseLeft,
+                ctrl: _,
+                shift: _,
+            } => {
                 left_mouse_pressed = true;
             }
-            Event::KeyReleased { key: KeyCode::MouseLeft, ctrl: _, shift: _ } => {
+            Event::KeyReleased {
+                key: KeyCode::MouseLeft,
+                ctrl: _,
+                shift: _,
+            } => {
                 left_mouse_released = true;
             }
             Event::Close |
-            Event::KeyPressed { key: KeyCode::Escape, ctrl: _, shift: _ } => return true,
+            Event::KeyPressed {
+                key: KeyCode::Escape,
+                ctrl: _,
+                shift: _,
+            } => return true,
             _ => (),
         }
     }
 
-    match state.direction {
-        Direction::Right => {
-            state.x += 1;
-            state.x %= 80;
-        }
-        Direction::Left => {
-            state.x -= 1;
-            if state.x < 0 {
-                state.x = 79;
-            }
-        }
-    }
-
-    let len = state.row.len();
-    state.row[state.x as usize % len] = state.rng.gen::<u8>();
-
-    for i in 0..len {
-        let c = state.row[i];
-
-        (platform.print_xy)(i as i32, 16, &c.to_string());
-    }
-
     state.ui_context.frame_init();
 
-    let reverse_spec = ButtonSpec {
+    let button_spec = ButtonSpec {
         x: 0,
         y: 0,
         w: 11,
         h: 3,
-        text: "Reverse".to_string(),
+        text: "Button".to_string(),
         id: 1,
     };
 
     if do_button(platform,
                  &mut state.ui_context,
-                 &reverse_spec,
+                 &button_spec,
                  left_mouse_pressed,
                  left_mouse_released) {
-        state.direction = match state.direction {
-            Direction::Right => Direction::Left,
-            Direction::Left => Direction::Right,
-        }
+        println!("Button pushed!");
     }
 
-    draw(platform, state);
-
-    false
-}
-
-fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Event) {
-    match *event {
-        Event::KeyPressed { key: KeyCode::R, ctrl: true, shift: _ } => {
-            println!("reset");
-            *state = new_state((platform.size)());
-        }
-        _ => (),
-    }
-}
-
-fn draw(platform: &Platform, state: &State) {
     //Demo:
     //1. Run `cargo run` in the folder containing the `state_manipulation` folder
     //   Leave the windoe open.
@@ -171,7 +106,21 @@ fn draw(platform: &Platform, state: &State) {
     //4. See that the string has changed in the running  program!
     (platform.print_xy)(34, 14, "Hello World!");
 
-    (platform.print_xy)(state.x, 15, "‾");
+    false
+}
+
+fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Event) {
+    match *event {
+        Event::KeyPressed {
+            key: KeyCode::R,
+            ctrl: true,
+            shift: _,
+        } => {
+            println!("reset");
+            *state = new_state((platform.size)());
+        }
+        _ => (),
+    }
 }
 
 pub struct ButtonSpec {
@@ -263,14 +212,6 @@ fn draw_rect(platform: &Platform, x: i32, y: i32, w: i32, h: i32) {
                    ["┌", "─", "┐", "│", "│", "└", "─", "┘"]);
 }
 
-fn draw_double_line_rect(platform: &Platform, x: i32, y: i32, w: i32, h: i32) {
-    draw_rect_with(platform,
-                   x,
-                   y,
-                   w,
-                   h,
-                   ["╔", "═", "╗", "║", "║", "╚", "═", "╝"]);
-}
 
 fn draw_rect_with(platform: &Platform, x: i32, y: i32, w: i32, h: i32, edges: [&str; 8]) {
     (platform.clear)(Some(Rect::from_values(x, y, w, h)));
