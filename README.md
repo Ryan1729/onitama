@@ -1,6 +1,16 @@
-This is a template to make it easy to get started with live code reloading using BearLibTerminal.
+This is a single player only version of the board game.
 
-Currently the live reloading is only tested/working on Linux, but the resulting program can be compiled in release mode for Linux and Windows. MacOS currently is untested.
+## Image info and credits
+    red used: #732e2c
+    blue used: #2b6388
+    
+    "Ninja Head" by [DarkZaitzev](http://game-icons.net/darkzaitzev/originals/ninja-head.html)
+    
+    "Ninja Mask" by [Lorc](http://game-icons.net/lorc/originals/ninja-mask.html)
+    
+    "Pagoda" by [Delapouite](http://game-icons.net/delapouite/originals/pagoda.html)
+    
+    All of the above icons used under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
 
 ## Installing required lib on Linux
 
