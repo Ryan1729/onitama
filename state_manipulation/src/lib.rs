@@ -2,6 +2,7 @@ extern crate rand;
 extern crate common;
 
 use common::*;
+use common::Piece::*;
 
 use rand::{StdRng, SeedableRng, Rng};
 
@@ -37,10 +38,22 @@ pub fn new_state(size: Size) -> State {
 
 
 fn make_state(mut rng: StdRng) -> State {
-    rng.gen::<bool>();
+    let mut board = [None; 25];
+    board[0] = Some(RedStudent);
+    board[1] = Some(RedStudent);
+    board[2] = Some(RedMaster);
+    board[3] = Some(RedStudent);
+    board[4] = Some(RedStudent);
+
+    board[20] = Some(BlueStudent);
+    board[21] = Some(BlueStudent);
+    board[22] = Some(BlueMaster);
+    board[23] = Some(BlueStudent);
+    board[24] = Some(BlueStudent);
 
     State {
         rng,
+        board,
         ui_context: UIContext::new(),
     }
 }
@@ -97,17 +110,44 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                  left_mouse_released) {
         println!("Button pushed!");
     }
+    // println!("{:?}", state.board);
+    for y in 0..5 {
+        for x in 0..5 {
+            let i = (y * 5 + x) as usize;
+            if let Some(piece) = state.board[i] {
+                print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+            } else if i == TOP_PAGODA_INDEX {
+                print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
+            } else if i == BOTTOM_PAGODA_INDEX {
+                print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
+            }
 
-    //Demo:
-    //1. Run `cargo run` in the folder containing the `state_manipulation` folder
-    //   Leave the windoe open.
-    //2. Change this string and save the file.
-    //3. Run `cargo build` in the `state_manipulation` folder.
-    //4. See that the string has changed in the running  program!
-    (platform.print_xy)(34, 14, "Hello World!");
+        }
+    }
 
     false
 }
+
+
+fn print_piece_xy(platform: &Platform, x: i32, y: i32, s: &str) {
+    (platform.print_xy)(30 + (x * 8), 10 + (y * 4), s);
+}
+
+fn piece_char(piece: Piece) -> char {
+    match piece {
+        RedStudent => STUDENT_RED,
+        BlueStudent => STUDENT_BLUE,
+        RedMaster => MASTER_RED,
+        BlueMaster => MASTER_BLUE,
+    }
+}
+
+const STUDENT_RED: char = '\u{E000}';
+const MASTER_RED: char = '\u{E001}';
+const PAGODA_RED: char = '\u{E002}';
+const STUDENT_BLUE: char = '\u{E003}';
+const MASTER_BLUE: char = '\u{E004}';
+const PAGODA_BLUE: char = '\u{E005}';
 
 fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Event) {
     match *event {

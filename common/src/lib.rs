@@ -24,7 +24,21 @@ pub struct Platform {
 
 pub struct State {
     pub rng: StdRng,
+    pub board: Board,
     pub ui_context: UIContext,
+}
+
+pub type Board = [Option<Piece>; 25];
+
+pub const TOP_PAGODA_INDEX: usize = 2;
+pub const BOTTOM_PAGODA_INDEX: usize = 22;
+
+#[derive(Copy, Clone, Debug)]
+pub enum Piece {
+    RedStudent,
+    BlueStudent,
+    RedMaster,
+    BlueMaster,
 }
 
 pub type UiId = i32;
