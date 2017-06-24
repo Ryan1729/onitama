@@ -89,7 +89,7 @@ impl Application {
 const TILE_SIZE: i32 = 64;
 
 fn main() {
-    terminal::open("____", 80, 30);
+    terminal::open("____", 80, 40);
     terminal::set(config::Window::empty().resizeable(true));
     terminal::set(vec![config::InputFilter::Group {
                            group: config::InputFilterGroup::Keyboard,

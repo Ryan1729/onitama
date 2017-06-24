@@ -107,8 +107,8 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     state.ui_context.frame_init();
 
     let button_spec = ButtonSpec {
-        x: 0,
-        y: 0,
+        x: 2,
+        y: 10,
         w: 11,
         h: 3,
         text: "Button".to_string(),
@@ -141,12 +141,20 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         }
     }
 
+    draw_rect(platform, 6, 1, 32, 8);
+    draw_rect(platform, 42, 1, 32, 8);
+
+    draw_rect(platform, 2, 16, 32, 8);
+
+    draw_rect(platform, 6, 32, 32, 8);
+    draw_rect(platform, 42, 32, 32, 8);
+
     false
 }
 
 
 fn print_piece_xy(platform: &Platform, x: i32, y: i32, s: &str) {
-    (platform.print_xy)(40 + (x * 8), 10 + (y * 4), s);
+    (platform.print_xy)(40 + (x * 8), 12 + (y * 4), s);
 }
 
 fn piece_char(piece: Piece) -> char {
