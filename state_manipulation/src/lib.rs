@@ -36,6 +36,18 @@ pub fn new_state(size: Size) -> State {
     make_state(rng)
 }
 
+macro_rules! with_layer {
+    ($platform:expr, $layer:expr, $code:block) => {
+        {
+            let current = ($platform.get_layer)();
+            ($platform.set_layer)($layer);
+
+            $code
+
+            ($platform.set_layer)(current);
+        }
+    }
+}
 
 fn make_state(mut rng: StdRng) -> State {
     let mut board = [None; 25];
@@ -113,14 +125,18 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     // println!("{:?}", state.board);
     for y in 0..5 {
         for x in 0..5 {
-            let i = (y * 5 + x) as usize;
-            if let Some(piece) = state.board[i] {
-                print_piece_xy(platform, x, y, &piece_char(piece).to_string());
-            } else if i == TOP_PAGODA_INDEX {
-                print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
-            } else if i == BOTTOM_PAGODA_INDEX {
-                print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
-            }
+            print_piece_xy(platform, x, y, &SPACE_EDGE.to_string());
+
+            with_layer!(platform, 1, {
+                let i = (y * 5 + x) as usize;
+                if let Some(piece) = state.board[i] {
+                    print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                } else if i == TOP_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
+                } else if i == BOTTOM_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
+                }
+            });
 
         }
     }
@@ -130,7 +146,7 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
 
 fn print_piece_xy(platform: &Platform, x: i32, y: i32, s: &str) {
-    (platform.print_xy)(30 + (x * 8), 10 + (y * 4), s);
+    (platform.print_xy)(40 + (x * 8), 10 + (y * 4), s);
 }
 
 fn piece_char(piece: Piece) -> char {
@@ -148,6 +164,8 @@ const PAGODA_RED: char = '\u{E002}';
 const STUDENT_BLUE: char = '\u{E003}';
 const MASTER_BLUE: char = '\u{E004}';
 const PAGODA_BLUE: char = '\u{E005}';
+
+const SPACE_EDGE: char = '\u{E006}';
 
 fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Event) {
     match *event {
