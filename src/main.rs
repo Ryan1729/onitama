@@ -48,11 +48,12 @@ impl Application {
         }
     }
 
-    fn update_and_render(&self,
-                         platform: &Platform,
-                         state: &mut State,
-                         events: &Vec<Event>)
-                         -> bool {
+    fn update_and_render(
+        &self,
+        platform: &Platform,
+        state: &mut State,
+        events: &Vec<Event>,
+    ) -> bool {
         unsafe {
             let f = self.library
                 .get::<fn(&Platform, &mut State, &Vec<Event>) -> bool>(b"update_and_render\0")
@@ -71,11 +72,12 @@ impl Application {
         state_manipulation::new_state(size)
     }
 
-    fn update_and_render(&self,
-                         platform: &Platform,
-                         state: &mut State,
-                         events: &Vec<Event>)
-                         -> bool {
+    fn update_and_render(
+        &self,
+        platform: &Platform,
+        state: &mut State,
+        events: &Vec<Event>,
+    ) -> bool {
         let mut new_events: Vec<common::Event> = unsafe {
             events
                 .iter()
@@ -91,20 +93,26 @@ const TILE_SIZE: i32 = 64;
 fn main() {
     terminal::open("____", 80, 40);
     terminal::set(config::Window::empty().resizeable(true));
-    terminal::set(vec![config::InputFilter::Group {
-                           group: config::InputFilterGroup::Keyboard,
-                           both: false,
-                       },
-                       config::InputFilter::Group {
-                           group: config::InputFilterGroup::Mouse,
-                           both: false,
-                       }]);
+    terminal::set(vec![
+        config::InputFilter::Group {
+            group: config::InputFilterGroup::Keyboard,
+            both: false,
+        },
+        config::InputFilter::Group {
+            group: config::InputFilterGroup::Mouse,
+            both: false,
+        },
+    ]);
     use bear_lib_terminal::terminal::config::font;
-    terminal::set(font::bitmap(font::Origin::Offset('\u{E000}'), "./pieces.png")
-                      .size(Size::new(TILE_SIZE, TILE_SIZE)));
-    terminal::set(font::bitmap(font::Origin::Offset('\u{E0C0}'), "./cards.png")
-                      .size(Size::new(245, 109))
-                      .align(font::Align::Center));
+    terminal::set(
+        font::bitmap(font::Origin::Offset('\u{E000}'), "./pieces.png")
+            .size(Size::new(TILE_SIZE, TILE_SIZE)),
+    );
+    terminal::set(
+        font::bitmap(font::Origin::Offset('\u{E0C0}'), "./cards.png")
+            .size(Size::new(245, 109))
+            .align(font::Align::Center),
+    );
 
 
     let mut app = Application::new();
@@ -143,11 +151,11 @@ fn main() {
     //reads the foreground then sets a different one then sets
     // it back to what it was before.
     set_foreground(common::Color {
-                       red: 255,
-                       green: 255,
-                       blue: 255,
-                       alpha: 255,
-                   });
+        red: 255,
+        green: 255,
+        blue: 255,
+        alpha: 255,
+    });
 
 
     let mut events = Vec::new();
@@ -207,8 +215,10 @@ fn mouse_position() -> common::Point {
 //Note: index selects a cell in *a single* layer, in case you have composition mode on.
 //To pick on different layers, set the current layer then pick.
 fn pick(point: common::Point, index: i32) -> char {
-    terminal::pick(unsafe { mem::transmute::<common::Point, Point>(point) },
-                   index)
+    terminal::pick(
+        unsafe { mem::transmute::<common::Point, Point>(point) },
+        index,
+    )
 }
 
 fn key_pressed(key: common::KeyCode) -> bool {
@@ -216,8 +226,10 @@ fn key_pressed(key: common::KeyCode) -> bool {
 }
 
 fn set_colors(fg: common::Color, bg: common::Color) {
-    terminal::set_colors(unsafe { mem::transmute::<common::Color, Color>(fg) },
-                         unsafe { mem::transmute::<common::Color, Color>(bg) });
+    terminal::set_colors(
+        unsafe { mem::transmute::<common::Color, Color>(fg) },
+        unsafe { mem::transmute::<common::Color, Color>(bg) },
+    );
 
 }
 

@@ -33,7 +33,9 @@ pub struct State {
 }
 
 pub trait AllValues {
-    fn all_values() -> Vec<Self> where Self: std::marker::Sized;
+    fn all_values() -> Vec<Self>
+    where
+        Self: std::marker::Sized;
 }
 
 pub enum Card {
@@ -81,8 +83,24 @@ impl Card {
 
 impl AllValues for Card {
     fn all_values() -> Vec<Card> {
-        vec![Tiger, Crab, Monkey, Crane, Dragon, Elephant, Mantis, Boar, Frog, Goose, Horse, Eel,
-             Rabbit, Rooster, Ox, Cobra]
+        vec![
+            Tiger,
+            Crab,
+            Monkey,
+            Crane,
+            Dragon,
+            Elephant,
+            Mantis,
+            Boar,
+            Frog,
+            Goose,
+            Horse,
+            Eel,
+            Rabbit,
+            Rooster,
+            Ox,
+            Cobra,
+        ]
     }
 }
 
@@ -306,11 +324,12 @@ impl Rect {
     /// assert_eq!(Rect::from_point_values(10, 20, 30, 40),
     ///     Rect::from_points(Point::new(10, 20), Point::new(30, 40)));
     /// ```
-    pub fn from_point_values(top_left_x: i32,
-                             top_left_y: i32,
-                             bottom_right_x: i32,
-                             bottom_right_y: i32)
-                             -> Rect {
+    pub fn from_point_values(
+        top_left_x: i32,
+        top_left_y: i32,
+        bottom_right_x: i32,
+        bottom_right_y: i32,
+    ) -> Rect {
         let top_left = Point::new(top_left_x, top_left_y);
         let bottom_right = Point::new(bottom_right_x, bottom_right_y);
         Rect::from_points(top_left, bottom_right)
