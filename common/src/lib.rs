@@ -29,6 +29,49 @@ pub struct State {
     pub ui_context: UIContext,
 }
 
+pub enum Card {
+    Tiger,
+    Crab,
+    Monkey,
+    Crane,
+    Dragon,
+    Elephant,
+    Mantis,
+    Boar,
+    Frog,
+    Goose,
+    Horse,
+    Eel,
+    Rabbit,
+    Rooster,
+    Ox,
+    Cobra,
+}
+use Card::*;
+
+impl Card {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            Tiger => "\u{E0C0}",
+            Crab => "\u{E0C1}",
+            Monkey => "\u{E0C2}",
+            Crane => "\u{E0C3}",
+            Dragon => "\u{E0C4}",
+            Elephant => "\u{E0C5}",
+            Mantis => "\u{E0C6}",
+            Boar => "\u{E0C7}",
+            Frog => "\u{E0C8}",
+            Goose => "\u{E0C9}",
+            Horse => "\u{E0CA}",
+            Eel => "\u{E0CB}",
+            Rabbit => "\u{E0CC}",
+            Rooster => "\u{E0CD}",
+            Ox => "\u{E0CE}",
+            Cobra => "\u{E0CF}",
+        }
+    }
+}
+
 pub type Board = [Option<Piece>; 25];
 
 pub const TOP_PAGODA_INDEX: usize = 2;

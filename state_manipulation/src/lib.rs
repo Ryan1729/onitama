@@ -3,6 +3,7 @@ extern crate common;
 
 use common::*;
 use common::Piece::*;
+use common::Card::*;
 
 use rand::{StdRng, SeedableRng, Rng};
 
@@ -141,25 +142,23 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         }
     }
 
-    draw_rect(platform, 6, 1, 32, 8);
-    with_layer!(platform, 1, {
-        //TODO make print_card fn
-        //fn print_card(platform: &Platform, x:i32, y:i32, card: Card) {}
-        (platform.print_xy_offset)(21, 4, 0, 7, "\u{E0C0}");
-    });
+    print_card(platform, 6, 1, Tiger);
+    print_card(platform, 42, 1, Ox);
 
+    print_card(platform, 2, 16, Dragon);
 
-    draw_rect(platform, 42, 1, 32, 8);
-    draw_rect(platform, 43, 2, 30, 6);
-
-    draw_rect(platform, 2, 16, 32, 8);
-
-    draw_rect(platform, 6, 32, 32, 8);
-    draw_rect(platform, 42, 32, 32, 8);
+    print_card(platform, 6, 32, Dragon);
+    print_card(platform, 42, 32, Dragon);
 
     false
 }
 
+fn print_card(platform: &Platform, x: i32, y: i32, card: Card) {
+    draw_rect(platform, x, y, 32, 8);
+    with_layer!(platform, 1, {
+        (platform.print_xy_offset)(x + 15, y + 3, 0, 7, card.as_str());
+    });
+}
 
 fn print_piece_xy(platform: &Platform, x: i32, y: i32, s: &str) {
     (platform.print_xy)(40 + (x * 8), 12 + (y * 4), s);
