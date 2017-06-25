@@ -121,12 +121,14 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     state.ui_context.frame_init();
 
     let button_spec = ButtonSpec {
-        x: 2,
-        y: 10,
-        w: 11,
-        h: 3,
+        base: BlankButtonSpec {
+            x: 2,
+            y: 10,
+            w: 11,
+            h: 3,
+            id: 1,
+        },
         text: "Button".to_string(),
-        id: 1,
     };
 
     if do_button(
@@ -158,19 +160,73 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         }
     }
 
-    print_card(platform, 6, 1, &state.player_cards.0);
-    print_card(platform, 42, 1, &state.player_cards.1);
+    print_card(platform, 6, 1, &state.cpu_cards.0);
+    print_card(platform, 42, 1, &state.cpu_cards.1);
 
     print_card(platform, 2, 16, &state.center_card);
 
-    print_card(platform, 6, 32, &state.cpu_cards.0);
-    print_card(platform, 42, 32, &state.cpu_cards.1);
+    do_card_button(
+        platform,
+        &mut state.ui_context,
+        6,
+        32,
+        &state.player_cards.0,
+        120,
+        left_mouse_pressed,
+        left_mouse_released,
+    );
+    do_card_button(
+        platform,
+        &mut state.ui_context,
+        42,
+        32,
+        &state.player_cards.1,
+        121,
+        left_mouse_pressed,
+        left_mouse_released,
+    );
 
     false
 }
 
+fn do_card_button(
+    platform: &Platform,
+    context: &mut UIContext,
+    x: i32,
+    y: i32,
+    card: &Card,
+    id: UiId,
+    left_mouse_pressed: bool,
+    left_mouse_released: bool,
+) -> bool {
+    let result = do_blank_button(
+        platform,
+        context,
+        &BlankButtonSpec {
+            x,
+            y,
+            w: CARD_WIDTH,
+            h: CARD_HEIGHT,
+            id,
+        },
+        left_mouse_pressed,
+        left_mouse_released,
+    );
+
+    place_card_tile(platform, x, y, card);
+
+    result
+}
+
+const CARD_WIDTH: i32 = 32;
+const CARD_HEIGHT: i32 = 8;
+
 fn print_card(platform: &Platform, x: i32, y: i32, card: &Card) {
-    draw_rect(platform, x, y, 32, 8);
+    draw_rect(platform, x, y, CARD_WIDTH, CARD_HEIGHT);
+    place_card_tile(platform, x, y, card);
+}
+
+fn place_card_tile(platform: &Platform, x: i32, y: i32, card: &Card) {
     with_layer!(platform, 1, {
         (platform.print_xy_offset)(x + 15, y + 3, 0, 7, card.as_str());
     });
@@ -213,21 +269,25 @@ fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Eve
 }
 
 pub struct ButtonSpec {
+    pub base: BlankButtonSpec,
+    pub text: String,
+}
+
+pub struct BlankButtonSpec {
     pub x: i32,
     pub y: i32,
     pub w: i32,
     pub h: i32,
-    pub text: String,
     pub id: i32,
 }
 
 //calling this once will swallow multiple clicks on the button. We could either
 //pass in and return the number of clicks to fix that, or this could simply be
 //called multiple times per frame (once for each click).
-fn do_button(
+fn do_blank_button(
     platform: &Platform,
     context: &mut UIContext,
-    spec: &ButtonSpec,
+    spec: &BlankButtonSpec,
     left_mouse_pressed: bool,
     left_mouse_released: bool,
 ) -> bool {
@@ -275,7 +335,27 @@ fn do_button(
         draw_rect(platform, spec.x, spec.y, spec.w, spec.h);
     }
 
-    print_centered_line(platform, spec.x, spec.y, spec.w, spec.h, &spec.text);
+    result
+}
+
+fn do_button(
+    platform: &Platform,
+    context: &mut UIContext,
+    spec: &ButtonSpec,
+    left_mouse_pressed: bool,
+    left_mouse_released: bool,
+) -> bool {
+    let base = &spec.base;
+
+    let result = do_blank_button(
+        platform,
+        context,
+        base,
+        left_mouse_pressed,
+        left_mouse_released,
+    );
+
+    print_centered_line(platform, base.x, base.y, base.w, base.h, &spec.text);
 
     return result;
 }
