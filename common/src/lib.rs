@@ -26,7 +26,14 @@ pub struct Platform {
 pub struct State {
     pub rng: StdRng,
     pub board: Board,
+    pub player_cards: (Card, Card),
+    pub center_card: Card,
+    pub cpu_cards: (Card, Card),
     pub ui_context: UIContext,
+}
+
+pub trait AllValues {
+    fn all_values() -> Vec<Self> where Self: std::marker::Sized;
 }
 
 pub enum Card {
@@ -69,6 +76,13 @@ impl Card {
             Ox => "\u{E0CE}",
             Cobra => "\u{E0CF}",
         }
+    }
+}
+
+impl AllValues for Card {
+    fn all_values() -> Vec<Card> {
+        vec![Tiger, Crab, Monkey, Crane, Dragon, Elephant, Mantis, Boar, Frog, Goose, Horse, Eel,
+             Rabbit, Rooster, Ox, Cobra]
     }
 }
 

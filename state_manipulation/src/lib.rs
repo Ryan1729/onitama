@@ -64,9 +64,22 @@ fn make_state(mut rng: StdRng) -> State {
     board[23] = Some(BlueStudent);
     board[24] = Some(BlueStudent);
 
+    let mut deck = Card::all_values();
+    rng.shuffle(&mut deck);
+
+    debug_assert!(deck.len() >= 5);
+
+    let player_cards = (deck.pop().unwrap(), deck.pop().unwrap());
+    let cpu_cards = (deck.pop().unwrap(), deck.pop().unwrap());
+
+    let center_card = deck.pop().unwrap();
+
     State {
         rng,
         board,
+        player_cards,
+        center_card,
+        cpu_cards,
         ui_context: UIContext::new(),
     }
 }
@@ -123,7 +136,7 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                  left_mouse_released) {
         println!("Button pushed!");
     }
-    // println!("{:?}", state.board);
+
     for y in 0..5 {
         for x in 0..5 {
             print_piece_xy(platform, x, y, &SPACE_EDGE.to_string());
@@ -142,18 +155,18 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         }
     }
 
-    print_card(platform, 6, 1, Tiger);
-    print_card(platform, 42, 1, Ox);
+    print_card(platform, 6, 1, &state.player_cards.0);
+    print_card(platform, 42, 1, &state.player_cards.1);
 
-    print_card(platform, 2, 16, Dragon);
+    print_card(platform, 2, 16, &state.center_card);
 
-    print_card(platform, 6, 32, Dragon);
-    print_card(platform, 42, 32, Dragon);
+    print_card(platform, 6, 32, &state.cpu_cards.0);
+    print_card(platform, 42, 32, &state.cpu_cards.1);
 
     false
 }
 
-fn print_card(platform: &Platform, x: i32, y: i32, card: Card) {
+fn print_card(platform: &Platform, x: i32, y: i32, card: &Card) {
     draw_rect(platform, x, y, 32, 8);
     with_layer!(platform, 1, {
         (platform.print_xy_offset)(x + 15, y + 3, 0, 7, card.as_str());
