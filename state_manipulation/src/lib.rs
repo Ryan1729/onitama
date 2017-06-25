@@ -4,6 +4,8 @@ extern crate common;
 use common::*;
 use common::Piece::*;
 use common::Card::*;
+use common::Turn::*;
+use common::PairIndex::*;
 
 use rand::{StdRng, SeedableRng, Rng};
 
@@ -80,6 +82,7 @@ fn make_state(mut rng: StdRng) -> State {
         player_cards,
         center_card,
         cpu_cards,
+        turn: Waiting,
         ui_context: UIContext::new(),
     }
 }
@@ -165,7 +168,7 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
     print_card(platform, 2, 16, &state.center_card);
 
-    do_card_button(
+    let first_clicked = do_card_button(
         platform,
         &mut state.ui_context,
         6,
@@ -175,7 +178,8 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         left_mouse_pressed,
         left_mouse_released,
     );
-    do_card_button(
+
+    let second_clicked = do_card_button(
         platform,
         &mut state.ui_context,
         42,
@@ -185,6 +189,31 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         left_mouse_pressed,
         left_mouse_released,
     );
+
+    let t = state.turn;
+
+    match state.turn {
+        Waiting => {
+            if first_clicked {
+                state.turn = SelectedCard(First);
+            } else if second_clicked {
+                state.turn = SelectedCard(Second);
+            }
+        }
+        SelectedCard(pair_index) => {
+            if first_clicked {
+                state.turn = SelectedCard(First);
+            } else if second_clicked {
+                state.turn = SelectedCard(Second);
+            }
+        }
+        SelectedPiece(pair_index /*, piece_index*/) => {}
+        CpuTurn => {}
+    }
+
+    if t != state.turn {
+        println!("{:?}", state.turn);
+    }
 
     false
 }

@@ -29,7 +29,22 @@ pub struct State {
     pub player_cards: (Card, Card),
     pub center_card: Card,
     pub cpu_cards: (Card, Card),
+    pub turn: Turn,
     pub ui_context: UIContext,
+}
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum Turn {
+    Waiting,
+    SelectedCard(PairIndex),
+    SelectedPiece(PairIndex /*, PieceIndex*/),
+    CpuTurn,
+}
+
+#[derive(PartialEq, Debug, Copy, Clone)]
+pub enum PairIndex {
+    First,
+    Second,
 }
 
 pub trait AllValues {
