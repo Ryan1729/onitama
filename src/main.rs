@@ -102,6 +102,9 @@ fn main() {
     use bear_lib_terminal::terminal::config::font;
     terminal::set(font::bitmap(font::Origin::Offset('\u{E000}'), "./pieces.png")
                       .size(Size::new(TILE_SIZE, TILE_SIZE)));
+    terminal::set(font::bitmap(font::Origin::Offset('\u{E0C0}'), "./cards.png")
+                      .size(Size::new(245, 109))
+                      .align(font::Align::Center));
 
 
     let mut app = Application::new();
@@ -118,6 +121,7 @@ fn main() {
 
     let platform = Platform {
         print_xy: terminal::print_xy,
+        print_xy_offset,
         clear: clear,
         size: size,
         pick: pick,
@@ -181,6 +185,11 @@ fn main() {
     }
 
     terminal::close();
+}
+
+fn print_xy_offset(x: i32, y: i32, dx: i32, dy: i32, s: &str) {
+    let offset_s = format!("[offset={},{}]{}", dx, dy, s);
+    terminal::print_xy(x, y, &offset_s);
 }
 
 fn clear(area: Option<common::Rect>) {

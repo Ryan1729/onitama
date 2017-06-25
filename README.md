@@ -12,6 +12,8 @@ This is a single player only version of the board game.
     
     All of the above icons used under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
 
+    the cards use a font called [Rokkit](https://www.fontzillion.com/fonts/new-typography/rokkitt), which is licensed under the [SIL Open Font License](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+
 ## Installing required lib on Linux
 
 This program relies on `libBearLibTerminal.so` so that should be copied into `usr/local/lib` or another folder indicated by this command: `ldconfig -v 2>/dev/null | grep -v ^$'\t'`

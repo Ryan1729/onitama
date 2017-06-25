@@ -6,6 +6,7 @@ use rand::StdRng;
 
 pub struct Platform {
     pub print_xy: fn(i32, i32, &str),
+    pub print_xy_offset: fn(i32, i32, i32, i32, &str),
     pub clear: fn(Option<Rect>),
     pub size: fn() -> Size,
     pub pick: fn(Point, i32) -> char,

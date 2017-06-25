@@ -142,7 +142,15 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     }
 
     draw_rect(platform, 6, 1, 32, 8);
+    with_layer!(platform, 1, {
+        //TODO make print_card fn
+        //fn print_card(platform: &Platform, x:i32, y:i32, card: Card) {}
+        (platform.print_xy_offset)(21, 4, 0, 7, "\u{E0C0}");
+    });
+
+
     draw_rect(platform, 42, 1, 32, 8);
+    draw_rect(platform, 43, 2, 30, 6);
 
     draw_rect(platform, 2, 16, 32, 8);
 
