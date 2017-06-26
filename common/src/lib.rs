@@ -131,6 +131,16 @@ pub enum Piece {
     RedMaster,
     BlueMaster,
 }
+use Piece::*;
+
+impl Piece {
+    pub fn is_player(&self) -> bool {
+        match *self {
+            BlueStudent | BlueMaster => true,
+            _ => false,
+        }
+    }
+}
 
 pub type UiId = i32;
 

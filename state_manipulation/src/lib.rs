@@ -145,23 +145,13 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         println!("Button pushed!");
     }
 
-    for y in 0..5 {
-        for x in 0..5 {
-            print_piece_xy(platform, x, y, &SPACE_EDGE.to_string());
-
-            with_layer!(platform, 1, {
-                let i = (y * 5 + x) as usize;
-                if let Some(piece) = state.board[i] {
-                    print_piece_xy(platform, x, y, &piece_char(piece).to_string());
-                } else if i == TOP_PAGODA_INDEX {
-                    print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
-                } else if i == BOTTOM_PAGODA_INDEX {
-                    print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
-                }
-            });
-
-        }
-    }
+    let possible_board_input = show_pieces(
+        platform,
+        state,
+        400,
+        left_mouse_pressed,
+        left_mouse_released,
+    );
 
     print_card(platform, 6, 1, &state.cpu_cards.0);
     print_card(platform, 42, 1, &state.cpu_cards.1);
@@ -192,23 +182,27 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
     let t = state.turn;
 
-    match state.turn {
-        Waiting => {
-            if first_clicked {
-                state.turn = SelectedCard(First);
-            } else if second_clicked {
-                state.turn = SelectedCard(Second);
+    if let Some(board_input) = possible_board_input {
+        state.turn = board_input;
+    } else {
+        match state.turn {
+            Waiting => {
+                if first_clicked {
+                    state.turn = SelectedCard(First);
+                } else if second_clicked {
+                    state.turn = SelectedCard(Second);
+                }
             }
-        }
-        SelectedCard(pair_index) => {
-            if first_clicked {
-                state.turn = SelectedCard(First);
-            } else if second_clicked {
-                state.turn = SelectedCard(Second);
+            SelectedCard(pair_index) => {
+                if first_clicked {
+                    state.turn = SelectedCard(First);
+                } else if second_clicked {
+                    state.turn = SelectedCard(Second);
+                }
             }
+            SelectedPiece(pair_index /*, piece_index*/) => {}
+            CpuTurn => {}
         }
-        SelectedPiece(pair_index /*, piece_index*/) => {}
-        CpuTurn => {}
     }
 
     if t != state.turn {
@@ -216,6 +210,59 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     }
 
     false
+}
+
+fn show_pieces(
+    platform: &Platform,
+    state: &mut State,
+    id_offset: UiId,
+    left_mouse_pressed: bool,
+    left_mouse_released: bool,
+) -> Option<Turn> {
+    let mut result = None;
+
+    for y in 0..5 {
+        for x in 0..5 {
+            print_piece_xy(platform, x, y, &SPACE_EDGE.to_string());
+
+            with_layer!(platform, 1, {
+                let index = y * 5 + x;
+                let i = index as usize;
+                if let Some(piece) = state.board[i] {
+                    if piece.is_player() {
+
+                        match state.turn {
+                            SelectedCard(card) => {
+                                // if do_piece_button(
+                                //     x,
+                                //     y,
+                                //     &mut state.ui_context,
+                                //     id_offset + index
+                                // ) {
+                                if true {
+                                    result = Some(SelectedPiece(card));
+                                }
+                            }
+                            // SelectedPiece(_ /*, piece_index*/) => {}
+                            _ => {
+                                print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                            }
+                        }
+                    } else {
+                        print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                    }
+
+                } else if i == TOP_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
+                } else if i == BOTTOM_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
+                }
+            });
+
+        }
+    }
+
+    None
 }
 
 fn do_card_button(
