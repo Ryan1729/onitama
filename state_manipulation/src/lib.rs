@@ -193,14 +193,20 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                     state.turn = SelectedCard(Second);
                 }
             }
-            SelectedCard(pair_index) => {
+            SelectedCard(_) => {
                 if first_clicked {
                     state.turn = SelectedCard(First);
                 } else if second_clicked {
                     state.turn = SelectedCard(Second);
                 }
             }
-            SelectedPiece(pair_index /*, piece_index*/) => {}
+            SelectedPiece(pair_index, piece_index) => {
+                if first_clicked {
+                    state.turn = SelectedCard(First);
+                } else if second_clicked {
+                    state.turn = SelectedCard(Second);
+                }
+            }
             CpuTurn => {}
         }
     }
@@ -223,46 +229,76 @@ fn show_pieces(
 
     for y in 0..5 {
         for x in 0..5 {
-            print_piece_xy(platform, x, y, &SPACE_EDGE.to_string());
+            (platform.print_xy)(piece_x(x), piece_y(y), &SPACE_EDGE.to_string());
 
-            with_layer!(platform, 1, {
-                let index = y * 5 + x;
-                let i = index as usize;
-                if let Some(piece) = state.board[i] {
-                    if piece.is_player() {
-
-                        match state.turn {
-                            SelectedCard(card) => {
-                                // if do_piece_button(
-                                //     x,
-                                //     y,
-                                //     &mut state.ui_context,
-                                //     id_offset + index
-                                // ) {
-                                if true {
-                                    result = Some(SelectedPiece(card));
-                                }
-                            }
-                            // SelectedPiece(_ /*, piece_index*/) => {}
-                            _ => {
-                                print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+            let index = y * 5 + x;
+            let i = index as usize;
+            if let Some(piece) = state.board[i] {
+                if piece.is_player() {
+                    match state.turn {
+                        SelectedCard(card) => {
+                            if do_piece_button(
+                                platform,
+                                &mut state.ui_context,
+                                x,
+                                y,
+                                piece,
+                                id_offset + index,
+                                left_mouse_pressed,
+                                left_mouse_released,
+                            )
+                            {
+                                result = Some(SelectedPiece(card, i));
                             }
                         }
-                    } else {
-                        print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                        // // SelectedPiece(_ /*, piece_index*/) => {}
+                        _ => {
+                            print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                        }
                     }
-
-                } else if i == TOP_PAGODA_INDEX {
-                    print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
-                } else if i == BOTTOM_PAGODA_INDEX {
-                    print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
+                } else {
+                    print_piece_xy(platform, x, y, &piece_char(piece).to_string());
                 }
-            });
+            } else if i == TOP_PAGODA_INDEX {
+                print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
+            } else if i == BOTTOM_PAGODA_INDEX {
+                print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
+            }
+
 
         }
     }
 
-    None
+    result
+}
+
+fn do_piece_button(
+    platform: &Platform,
+    context: &mut UIContext,
+    x: i32,
+    y: i32,
+    piece: Piece,
+    id: UiId,
+    left_mouse_pressed: bool,
+    left_mouse_released: bool,
+) -> bool {
+    let result = do_blank_button(
+        platform,
+        context,
+        &BlankButtonSpec {
+            x: piece_x(x) - 4,
+            y: piece_y(y) - 2,
+            w: 9,
+            h: 5,
+            id,
+        },
+        left_mouse_pressed,
+        left_mouse_released,
+    );
+
+    print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+
+    result
 }
 
 fn do_card_button(
@@ -309,7 +345,16 @@ fn place_card_tile(platform: &Platform, x: i32, y: i32, card: &Card) {
 }
 
 fn print_piece_xy(platform: &Platform, x: i32, y: i32, s: &str) {
-    (platform.print_xy)(40 + (x * 8), 12 + (y * 4), s);
+    with_layer!(platform, 1, {
+        (platform.print_xy)(piece_x(x), piece_y(y), s);
+    });
+}
+
+fn piece_x(x: i32) -> i32 {
+    40 + (x * 8)
+}
+fn piece_y(y: i32) -> i32 {
+    12 + (y * 4)
 }
 
 fn piece_char(piece: Piece) -> char {

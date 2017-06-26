@@ -37,7 +37,7 @@ pub struct State {
 pub enum Turn {
     Waiting,
     SelectedCard(PairIndex),
-    SelectedPiece(PairIndex /*, PieceIndex*/),
+    SelectedPiece(PairIndex, usize),
     CpuTurn,
 }
 
