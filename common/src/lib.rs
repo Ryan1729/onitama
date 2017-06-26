@@ -121,6 +121,69 @@ impl AllValues for Card {
 
 pub type Board = [Option<Piece>; 25];
 
+pub fn valid_move_locations(board: &Board, card: &Card, piece_index: usize) -> Vec<(usize, usize)> {
+    let mut result = Vec::new();
+
+    if is_index_on_board(piece_index) {
+        if let Some((x, y)) = get_board_xy(piece_index) {
+            for &(x_1, y_1) in get_offsets(card).iter() {
+                let result_x = x + x_1;
+                let result_y = y + y_1;
+                if get_board_index(result_x, result_y).is_some() {
+                    result.push((result_x, result_y));
+                }
+            }
+        }
+    }
+
+    result
+}
+
+fn get_offsets(card: &Card) -> Vec<(usize, usize)> {
+    //TODO
+    vec![]
+}
+
+pub fn get_board_index(x: usize, y: usize) -> Option<usize> {
+    let result = y * 5 + x;
+
+    if is_index_on_board(result) {
+        Some(result)
+    } else {
+        None
+    }
+}
+
+pub fn get_board_xy(index: usize) -> Option<(usize, usize)> {
+    if is_index_on_board(index) {
+        Some((index % 5, index / 5))
+    } else {
+        None
+    }
+}
+
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
+#[cfg(test)]
+mod board_indices {
+    use get_board_index;
+    use get_board_xy;
+
+    quickcheck! {
+      fn prop(i: usize) -> bool {
+          i == get_board_xy(i).and_then(|(x,y)|
+            get_board_index(x,y)
+      ).unwrap_or(i)
+      }
+  }
+}
+
+fn is_index_on_board(piece_index: usize) -> bool {
+    piece_index < 25
+}
+
 pub const TOP_PAGODA_INDEX: usize = 2;
 pub const BOTTOM_PAGODA_INDEX: usize = 22;
 
@@ -178,12 +241,6 @@ impl UIContext {
         self.next_hot = 0;
     }
 }
-
-pub enum Direction {
-    Right,
-    Left,
-}
-
 
 
 
@@ -281,7 +338,7 @@ impl Rect {
     /// # Examples
     ///
     /// ```
-    /// # use bear_lib_terminal::geometry::{Rect, Point, Size};
+    /// # use common::{Rect, Point, Size};
     /// let rect = Rect::from_size(Point::new(10, 20), Size::new(30, 40));
     /// assert_eq!(rect.top_left, Point::new(10, 20));
     /// assert_eq!(rect.top_right, Point::new(40, 20));
@@ -308,7 +365,7 @@ impl Rect {
     /// # Examples
     ///
     /// ```
-    /// # use bear_lib_terminal::geometry::{Rect, Point, Size};
+    /// # use common::{Rect, Point, Size};
     /// let rect = Rect::from_points(Point::new(10, 20), Point::new(30, 40));
     /// assert_eq!(rect.top_left, Point::new(10, 20));
     /// assert_eq!(rect.top_right, Point::new(30, 20));
@@ -329,7 +386,7 @@ impl Rect {
     /// # Examples
     ///
     /// ```
-    /// # use bear_lib_terminal::geometry::{Rect, Point, Size};
+    /// # use common::{Rect, Point, Size};
     /// assert_eq!(Rect::from_values(10, 20, 30, 40),
     ///     Rect::from_size(Point::new(10, 20), Size::new(30, 40)));
     /// ```
@@ -345,7 +402,7 @@ impl Rect {
     /// # Examples
     ///
     /// ```
-    /// # use bear_lib_terminal::geometry::{Rect, Point, Size};
+    /// # use common::{Rect, Point, Size};
     /// assert_eq!(Rect::from_point_values(10, 20, 30, 40),
     ///     Rect::from_points(Point::new(10, 20), Point::new(30, 40)));
     /// ```

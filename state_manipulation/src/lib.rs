@@ -206,6 +206,21 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                 } else if second_clicked {
                     state.turn = SelectedCard(Second);
                 }
+
+                let card = match pair_index {
+                    First => &state.player_cards.0,
+                    Second => &state.player_cards.1,
+                };
+
+                with_layer!(platform, 3, {
+                    for &(x, y) in valid_move_locations(&state.board, card, piece_index).iter() {
+                        (platform.print_xy)(
+                            piece_x(x as i32),
+                            piece_y(y as i32),
+                            &BLUE_HIGHLIGHT.to_string(),
+                        );
+                    }
+                })
             }
             CpuTurn => {}
         }
@@ -231,40 +246,42 @@ fn show_pieces(
         for x in 0..5 {
             (platform.print_xy)(piece_x(x), piece_y(y), &SPACE_EDGE.to_string());
 
-            let index = y * 5 + x;
-            let i = index as usize;
-            if let Some(piece) = state.board[i] {
-                if piece.is_player() {
-                    match state.turn {
-                        SelectedCard(card) => {
-                            if do_piece_button(
-                                platform,
-                                &mut state.ui_context,
-                                x,
-                                y,
-                                piece,
-                                id_offset + index,
-                                left_mouse_pressed,
-                                left_mouse_released,
-                            )
-                            {
-                                result = Some(SelectedPiece(card, i));
+            if let Some(index) = get_board_index(x as usize, y as usize) {
+
+                let i = index as i32;
+                if let Some(piece) = state.board[index] {
+                    if piece.is_player() {
+                        match state.turn {
+                            SelectedCard(card) => {
+                                if do_piece_button(
+                                    platform,
+                                    &mut state.ui_context,
+                                    x,
+                                    y,
+                                    piece,
+                                    id_offset + i,
+                                    left_mouse_pressed,
+                                    left_mouse_released,
+                                )
+                                {
+                                    result = Some(SelectedPiece(card, index));
+                                }
+                            }
+                            // // SelectedPiece(_ /*, piece_index*/) => {}
+                            _ => {
+                                print_piece_xy(platform, x, y, &piece_char(piece).to_string());
                             }
                         }
-                        // // SelectedPiece(_ /*, piece_index*/) => {}
-                        _ => {
-                            print_piece_xy(platform, x, y, &piece_char(piece).to_string());
-                        }
+                    } else {
+                        print_piece_xy(platform, x, y, &piece_char(piece).to_string());
                     }
-                } else {
-                    print_piece_xy(platform, x, y, &piece_char(piece).to_string());
+                } else if index == TOP_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
+                } else if index == BOTTOM_PAGODA_INDEX {
+                    print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
                 }
-            } else if i == TOP_PAGODA_INDEX {
-                print_piece_xy(platform, x, y, &PAGODA_RED.to_string());
-            } else if i == BOTTOM_PAGODA_INDEX {
-                print_piece_xy(platform, x, y, &PAGODA_BLUE.to_string());
-            }
 
+            }
 
         }
     }
@@ -374,6 +391,8 @@ const MASTER_BLUE: char = '\u{E004}';
 const PAGODA_BLUE: char = '\u{E005}';
 
 const SPACE_EDGE: char = '\u{E006}';
+const BLUE_HIGHLIGHT: char = '\u{E007}';
+const RED_HIGHLIGHT: char = '\u{E008}';
 
 fn cross_mode_event_handling(platform: &Platform, state: &mut State, event: &Event) {
     match *event {
