@@ -53,6 +53,7 @@ pub trait AllValues {
         Self: std::marker::Sized;
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Card {
     Tiger,
     Crab,

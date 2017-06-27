@@ -208,24 +208,69 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                     state.turn = SelectedCard(Second);
                 }
 
-                let card = match pair_index {
-                    First => &state.player_cards.0,
-                    Second => &state.player_cards.1,
-                };
-
-                with_layer!(platform, 3, {
-                    for &(x, y) in valid_move_locations(&state.board, card, piece_index, Blue)
-                        .iter()
+                let mut have_not_moved = true;
+                let mut counter = 0;
+                for &(x_usize, y_usize) in
+                    valid_move_locations(
+                        &state.board,
+                        match pair_index {
+                            First => &state.player_cards.0,
+                            Second => &state.player_cards.1,
+                        },
+                        piece_index,
+                        Blue,
+                    ).iter()
+                {
+                    let x = x_usize as i32;
+                    let y = y_usize as i32;
+                    if do_blank_button(
+                        platform,
+                        &mut state.ui_context,
+                        &BlankButtonSpec {
+                            x: piece_x(x) - 4,
+                            y: piece_y(y) - 2,
+                            w: PIECE_BUTTON_WIDTH,
+                            h: PIECE_BUTTON_HEIGHT,
+                            id: 450 + counter,
+                        },
+                        left_mouse_pressed,
+                        left_mouse_released,
+                    ) && have_not_moved
                     {
-                        (platform.print_xy)(
-                            piece_x(x as i32),
-                            piece_y(y as i32),
-                            &BLUE_HIGHLIGHT.to_string(),
-                        );
+                        if let Some(board_index) = get_board_index(x_usize, y_usize) {
+                            let piece = state.board[piece_index];
+                            state.board[board_index] = piece;
+                            state.board[piece_index] = None;
+
+                            let temp = state.center_card;
+                            match pair_index {
+                                First => {
+                                    state.center_card = state.player_cards.0;
+                                    state.player_cards.0 = temp;
+                                }
+                                Second => {
+                                    state.center_card = state.player_cards.1;
+                                    state.player_cards.1 = temp;
+                                }
+                            }
+
+                            state.turn = CpuTurn;
+
+                            have_not_moved = false;
+                        }
+
                     }
-                })
+                    counter += 1;
+
+                    with_layer!(platform, 3, {
+                        (platform.print_xy)(piece_x(x), piece_y(y), &BLUE_HIGHLIGHT.to_string());
+                    })
+                }
             }
-            CpuTurn => {}
+            CpuTurn => {
+                //TODO
+                state.turn = Waiting;
+            }
         }
     }
 
@@ -292,6 +337,9 @@ fn show_pieces(
     result
 }
 
+const PIECE_BUTTON_WIDTH: i32 = 9;
+const PIECE_BUTTON_HEIGHT: i32 = 5;
+
 fn do_piece_button(
     platform: &Platform,
     context: &mut UIContext,
@@ -308,8 +356,8 @@ fn do_piece_button(
         &BlankButtonSpec {
             x: piece_x(x) - 4,
             y: piece_y(y) - 2,
-            w: 9,
-            h: 5,
+            w: PIECE_BUTTON_WIDTH,
+            h: PIECE_BUTTON_HEIGHT,
             id,
         },
         left_mouse_pressed,
