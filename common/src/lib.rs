@@ -121,16 +121,23 @@ impl AllValues for Card {
 
 pub type Board = [Option<Piece>; 25];
 
-pub fn valid_move_locations(board: &Board, card: &Card, piece_index: usize) -> Vec<(usize, usize)> {
+pub fn valid_move_locations(
+    board: &Board,
+    card: &Card,
+    piece_index: usize,
+    piece_colour: PieceColour,
+) -> Vec<(usize, usize)> {
     let mut result = Vec::new();
 
     if is_index_on_board(piece_index) {
         if let Some((x, y)) = get_board_xy(piece_index) {
             for &(x_1, y_1) in get_offsets(card).iter() {
-                let result_x = x + x_1;
-                let result_y = y + y_1;
-                if get_board_index(result_x, result_y).is_some() {
-                    result.push((result_x, result_y));
+                let result_x = (x as isize).wrapping_add(x_1) as usize;
+                let result_y = (y as isize).wrapping_add(y_1) as usize;
+                if let Some(target_index) = get_board_index(result_x, result_y) {
+                    if board[target_index].map(Piece::piece_colour) != Some(piece_colour) {
+                        result.push((result_x, result_y));
+                    }
                 }
             }
         }
@@ -139,9 +146,25 @@ pub fn valid_move_locations(board: &Board, card: &Card, piece_index: usize) -> V
     result
 }
 
-fn get_offsets(card: &Card) -> Vec<(usize, usize)> {
-    //TODO
-    vec![]
+fn get_offsets(card: &Card) -> Vec<(isize, isize)> {
+    match *card {
+        Tiger => vec![(0, -2), (0, 1)],
+        Crab => vec![(-2, 0), (2, 0), (0, -1)],
+        Monkey => vec![(-1, -1), (-1, 1), (1, -1), (1, 1)],
+        Crane => vec![(-1, 1), (1, 1), (0, -1)],
+        Dragon => vec![(-1, 1), (1, 1), (-2, -1), (2, -1)],
+        Elephant => vec![(-1, 0), (1, 0), (-1, -1), (1, -1)],
+        Mantis => vec![(-1, -1), (-1, 1), (0, 1)],
+        Boar => vec![(-1, 0), (1, 0), (0, -1)],
+        Frog => vec![(-2, 0), (-1, -1), (1, 1)],
+        Goose => vec![(-1, 0), (-1, -1), (1, 0), (1, 1)],
+        Horse => vec![(-1, 0), (0, -1), (0, 1)],
+        Eel => vec![(1, 0), (-1, -1), (-1, 1)],
+        Rabbit => vec![(2, 0), (1, -1), (-1, 1)],
+        Rooster => vec![(1, 0), (1, -1), (-1, 0), (-1, 1)],
+        Ox => vec![(1, 0), (0, -1), (0, 1)],
+        Cobra => vec![(-1, 0), (1, -1), (1, 1)],
+    }
 }
 
 pub fn get_board_index(x: usize, y: usize) -> Option<usize> {
@@ -203,7 +226,20 @@ impl Piece {
             _ => false,
         }
     }
+    pub fn piece_colour(self) -> PieceColour {
+        match self {
+            BlueStudent | BlueMaster => Blue,
+            RedStudent | RedMaster => Red,
+        }
+    }
 }
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum PieceColour {
+    Red,
+    Blue,
+}
+use PieceColour::*;
 
 pub type UiId = i32;
 

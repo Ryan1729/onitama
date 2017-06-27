@@ -3,6 +3,7 @@ extern crate common;
 
 use common::*;
 use common::Piece::*;
+use common::PieceColour::*;
 use common::Card::*;
 use common::Turn::*;
 use common::PairIndex::*;
@@ -213,7 +214,9 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                 };
 
                 with_layer!(platform, 3, {
-                    for &(x, y) in valid_move_locations(&state.board, card, piece_index).iter() {
+                    for &(x, y) in valid_move_locations(&state.board, card, piece_index, Blue)
+                        .iter()
+                    {
                         (platform.print_xy)(
                             piece_x(x as i32),
                             piece_y(y as i32),
