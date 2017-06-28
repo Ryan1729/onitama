@@ -31,6 +31,7 @@ pub struct State {
     pub cpu_cards: (Card, Card),
     pub turn: Turn,
     pub show_credits: bool,
+    pub rotate_opponet_cards: bool,
     pub ui_context: UIContext,
 }
 
@@ -84,24 +85,40 @@ pub enum Card {
 use Card::*;
 
 impl Card {
-    pub fn as_str(&self) -> &'static str {
-        match *self {
-            Tiger => "\u{E0C0}",
-            Crab => "\u{E0C1}",
-            Monkey => "\u{E0C2}",
-            Crane => "\u{E0C3}",
-            Dragon => "\u{E0C4}",
-            Elephant => "\u{E0C5}",
-            Mantis => "\u{E0C6}",
-            Boar => "\u{E0C7}",
-            Frog => "\u{E0C8}",
-            Goose => "\u{E0C9}",
-            Horse => "\u{E0CA}",
-            Eel => "\u{E0CB}",
-            Rabbit => "\u{E0CC}",
-            Rooster => "\u{E0CD}",
-            Ox => "\u{E0CE}",
-            Cobra => "\u{E0CF}",
+    pub fn as_str(&self, rotate: bool) -> &'static str {
+        match (*self, rotate) {
+            (Tiger, false) => "\u{E0C0}",
+            (Tiger, true) => "\u{E0D0}",
+            (Crab, false) => "\u{E0C1}",
+            (Crab, true) => "\u{E0D1}",
+            (Monkey, false) => "\u{E0C2}",
+            (Monkey, true) => "\u{E0D2}",
+            (Crane, false) => "\u{E0C3}",
+            (Crane, true) => "\u{E0D3}",
+            (Dragon, false) => "\u{E0C4}",
+            (Dragon, true) => "\u{E0D4}",
+            (Elephant, false) => "\u{E0C5}",
+            (Elephant, true) => "\u{E0D5}",
+            (Mantis, false) => "\u{E0C6}",
+            (Mantis, true) => "\u{E0D6}",
+            (Boar, false) => "\u{E0C7}",
+            (Boar, true) => "\u{E0D7}",
+            (Frog, false) => "\u{E0C8}",
+            (Frog, true) => "\u{E0D8}",
+            (Goose, false) => "\u{E0C9}",
+            (Goose, true) => "\u{E0D9}",
+            (Horse, false) => "\u{E0CA}",
+            (Horse, true) => "\u{E0DA}",
+            (Eel, false) => "\u{E0CB}",
+            (Eel, true) => "\u{E0DB}",
+            (Rabbit, false) => "\u{E0CC}",
+            (Rabbit, true) => "\u{E0DC}",
+            (Rooster, false) => "\u{E0CD}",
+            (Rooster, true) => "\u{E0DD}",
+            (Ox, false) => "\u{E0CE}",
+            (Ox, true) => "\u{E0DE}",
+            (Cobra, false) => "\u{E0CF}",
+            (Cobra, true) => "\u{E0DF}",
         }
     }
 }

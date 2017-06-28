@@ -85,6 +85,7 @@ fn make_state(mut rng: StdRng) -> State {
         cpu_cards,
         turn: Waiting,
         show_credits: false,
+        rotate_opponet_cards: true,
         ui_context: UIContext::new(),
     }
 }
@@ -204,16 +205,50 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         which is licensed under the SIL Open Font License",
         );
     } else {
-        print_card(platform, 6, 1, &state.cpu_cards.0);
-        print_card(platform, 42, 1, &state.cpu_cards.1);
+        let rotate_spec = ButtonSpec {
+            base: BlankButtonSpec {
+                x: 2,
+                y: 27,
+                w: 30,
+                h: 3,
+                id: 7,
+            },
+            text: "Rotate opponents's cards".to_string(),
+        };
 
-        print_card(platform, 2, 16, &state.center_card);
+        if do_button(
+            platform,
+            &mut state.ui_context,
+            &rotate_spec,
+            left_mouse_pressed,
+            left_mouse_released,
+        )
+        {
+            state.rotate_opponet_cards = !state.rotate_opponet_cards;
+        }
+
+        print_card(
+            platform,
+            6,
+            1,
+            &state.cpu_cards.0,
+            state.rotate_opponet_cards,
+        );
+        print_card(
+            platform,
+            42,
+            1,
+            &state.cpu_cards.1,
+            state.rotate_opponet_cards,
+        );
+
+        print_card(platform, 2, 16, &state.center_card, false);
 
         let new_game_spec = ButtonSpec {
             base: BlankButtonSpec {
                 x: 2,
                 y: 10,
-                w: 11,
+                w: 12,
                 h: 3,
                 id: 5,
             },
@@ -745,7 +780,7 @@ fn do_card_button(
         left_mouse_released,
     );
 
-    place_card_tile(platform, x, y, card);
+    place_card_tile(platform, x, y, card, false);
 
     result
 }
@@ -753,14 +788,14 @@ fn do_card_button(
 const CARD_WIDTH: i32 = 32;
 const CARD_HEIGHT: i32 = 8;
 
-fn print_card(platform: &Platform, x: i32, y: i32, card: &Card) {
+fn print_card(platform: &Platform, x: i32, y: i32, card: &Card, rotate: bool) {
     draw_rect(platform, x, y, CARD_WIDTH, CARD_HEIGHT);
-    place_card_tile(platform, x, y, card);
+    place_card_tile(platform, x, y, card, rotate);
 }
 
-fn place_card_tile(platform: &Platform, x: i32, y: i32, card: &Card) {
+fn place_card_tile(platform: &Platform, x: i32, y: i32, card: &Card, rotate: bool) {
     with_layer!(platform, 1, {
-        (platform.print_xy_offset)(x + 15, y + 3, 0, 7, card.as_str());
+        (platform.print_xy_offset)(x + 15, y + 3, 0, 7, card.as_str(rotate));
     });
 }
 
