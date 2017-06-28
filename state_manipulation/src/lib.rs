@@ -40,6 +40,25 @@ pub fn new_state(size: Size) -> State {
     make_state(rng)
 }
 
+const CONTROL_COLOUR: Color = Color {
+    red: 0x99,
+    green: 0x99,
+    blue: 0x99,
+    alpha: 0xFF,
+};
+
+macro_rules! with_foreground {
+    ($platform:expr, $foreground:expr, $code:block) => {
+        {
+            let current = ($platform.get_foreground)();
+            ($platform.set_foreground)($foreground);
+
+            $code
+
+            ($platform.set_foreground)(current);
+        }
+    }
+}
 macro_rules! with_layer {
     ($platform:expr, $layer:expr, $code:block) => {
         {
@@ -162,31 +181,33 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         )
     };
 
-    let credits_spec = ButtonSpec {
-        base: BlankButtonSpec {
-            x: 2,
-            y: 24,
-            w: 16,
-            h: 3,
-            id: 6,
-        },
-        text: (if state.show_credits {
-                   "Hide credits"
-               } else {
-                   "Show credits"
-               }).to_string(),
-    };
+    with_foreground!(platform, CONTROL_COLOUR, {
+        let credits_spec = ButtonSpec {
+            base: BlankButtonSpec {
+                x: 2,
+                y: 24,
+                w: 16,
+                h: 3,
+                id: 6,
+            },
+            text: (if state.show_credits {
+                       "Hide credits"
+                   } else {
+                       "Show credits"
+                   }).to_string(),
+        };
 
-    if do_button(
-        platform,
-        &mut state.ui_context,
-        &credits_spec,
-        left_mouse_pressed,
-        left_mouse_released,
-    )
-    {
-        state.show_credits = !state.show_credits;
-    }
+        if do_button(
+            platform,
+            &mut state.ui_context,
+            &credits_spec,
+            left_mouse_pressed,
+            left_mouse_released,
+        )
+        {
+            state.show_credits = !state.show_credits;
+        }
+    });
 
     if state.show_credits {
         (platform.print_xy)(
@@ -212,28 +233,6 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         Ryan Wiedemann (Ryan1729 on github)",
         );
     } else {
-        let rotate_spec = ButtonSpec {
-            base: BlankButtonSpec {
-                x: 2,
-                y: 27,
-                w: 30,
-                h: 3,
-                id: 7,
-            },
-            text: "Rotate opponents's cards".to_string(),
-        };
-
-        if do_button(
-            platform,
-            &mut state.ui_context,
-            &rotate_spec,
-            left_mouse_pressed,
-            left_mouse_released,
-        )
-        {
-            state.rotate_opponet_cards = !state.rotate_opponet_cards;
-        }
-
         print_card(
             platform,
             6,
@@ -251,27 +250,52 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
         print_card(platform, 2, 16, &state.center_card, false);
 
-        let new_game_spec = ButtonSpec {
-            base: BlankButtonSpec {
-                x: 2,
-                y: 10,
-                w: 12,
-                h: 3,
-                id: 5,
-            },
-            text: "New game".to_string(),
-        };
+        with_foreground!(platform, CONTROL_COLOUR, {
+            let new_game_spec = ButtonSpec {
+                base: BlankButtonSpec {
+                    x: 2,
+                    y: 10,
+                    w: 12,
+                    h: 3,
+                    id: 5,
+                },
+                text: "New game".to_string(),
+            };
 
-        if do_button(
-            platform,
-            &mut state.ui_context,
-            &new_game_spec,
-            left_mouse_pressed,
-            left_mouse_released,
-        )
-        {
-            *state = make_state(state.rng);
-        }
+            if do_button(
+                platform,
+                &mut state.ui_context,
+                &new_game_spec,
+                left_mouse_pressed,
+                left_mouse_released,
+            )
+            {
+                *state = make_state(state.rng);
+            }
+
+            let rotate_spec = ButtonSpec {
+                base: BlankButtonSpec {
+                    x: 2,
+                    y: 27,
+                    w: 30,
+                    h: 3,
+                    id: 7,
+                },
+                text: "Rotate opponents's cards".to_string(),
+            };
+
+            if do_button(
+                platform,
+                &mut state.ui_context,
+                &rotate_spec,
+                left_mouse_pressed,
+                left_mouse_released,
+            )
+            {
+                state.rotate_opponet_cards = !state.rotate_opponet_cards;
+            }
+
+        });
     }
     let t = state.turn;
 
