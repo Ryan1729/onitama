@@ -130,7 +130,7 @@ impl AllValues for Card {
 
 pub type Board = [Option<Piece>; 25];
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Move {
     pub source_index: usize,
     pub target_index: usize,

@@ -286,8 +286,11 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
                 if not_moved {
                     let mut viable_moves = Vec::new();
+                    //these shouldn't contain inviable moves either
                     let mut no_player_capture_moves = Vec::new();
+                    let mut capturing_moves = Vec::new();
 
+                    let blue_before = piece_count_of_colour(&state.board, Blue);
                     for &(current_move, pair_index) in moves.iter() {
                         let one_move_board = apply_move(&state.board, current_move);
 
@@ -300,7 +303,7 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                         if player_has_no_winning_move {
                             viable_moves.push((current_move, pair_index));
 
-                            let before = piece_count_of_colour(&one_move_board, Red);
+                            let red_before = piece_count_of_colour(&one_move_board, Red);
                             let player_cannot_capture =
                                 !player_moves.iter().any(|&(player_move, _)| {
                                     let after = piece_count_of_colour(
@@ -308,25 +311,49 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                                         Red,
                                     );
 
-                                    before > after
+                                    red_before > after
                                 });
 
                             if player_cannot_capture {
                                 no_player_capture_moves.push((current_move, pair_index));
                             }
+
+                            let captured = blue_before >
+                                piece_count_of_colour(&one_move_board, Blue);
+
+                            if captured {
+                                capturing_moves.push((current_move, pair_index));
+                            }
                         }
                     }
 
-                    //TODO prefer moves which capture opponents pieces
-                    //should it prefer no_player_capture_moves to "can_capture_moves"?
-                    //either way it should certainly prefer moves that are in both over
-                    // one or the other.
+                    let undefended_captures: Vec<_> = capturing_moves
+                        .iter()
+                        .filter(|x| no_player_capture_moves.contains(x))
+                        .map(|x| *x)
+                        .collect();
 
-                    if no_player_capture_moves.len() > 0 {
-                        make_random_cpu_move_from_vec(state, no_player_capture_moves);
+                    if not_moved && undefended_captures.len() > 0 {
+                        make_random_cpu_move_from_vec(state, undefended_captures);
                         not_moved = false;
-                    } else if cfg!(debug_assertions) && not_moved && viable_moves.len() > 0 {
-                        println!("player can capture");
+                    }
+
+                    let agressive = state.rng.gen::<bool>();
+
+                    let (first_priority, second_priority) = if agressive {
+                        (capturing_moves, no_player_capture_moves)
+                    } else {
+                        (no_player_capture_moves, capturing_moves)
+                    };
+
+                    if not_moved && first_priority.len() > 0 {
+                        make_random_cpu_move_from_vec(state, first_priority);
+                        not_moved = false;
+                    }
+
+                    if not_moved && second_priority.len() > 0 {
+                        make_random_cpu_move_from_vec(state, second_priority);
+                        not_moved = false;
                     }
 
                     if not_moved && viable_moves.len() > 0 {
