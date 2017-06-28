@@ -261,8 +261,26 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                     }
                 }
 
-                //TODO look at each of the player's possible moves and don't make a move if
-                //it would allow the player to win next turn.
+                if not_moved {
+                    for &(current_move, pair_index) in moves.iter() {
+                        let one_move_board = apply_move(&state.board, current_move);
+
+                        let player_moves = get_moves(&one_move_board, &state.player_cards, Blue);
+
+                        let player_has_no_winning_move =
+                            !player_moves.iter().any(|&(player_move, _)| {
+                                blue_wins(&apply_move(&one_move_board, player_move))
+                            });
+                        if player_has_no_winning_move {
+                            state.board = one_move_board;
+
+                            swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
+
+                            not_moved = false;
+                            break;
+                        }
+                    }
+                }
 
                 //TODO look at each of the player's possible moves and don't make a move if
                 //it would allow the player to capture a piece next turn.
@@ -415,17 +433,35 @@ fn apply_move(board: &Board, current_move: Move) -> Board {
 }
 
 fn swap_cards(center_card: &mut Card, cards: &mut (Card, Card), pair_index: PairIndex) {
-    let temp = *center_card;
+    let swapped = get_swap_cards_result(*center_card, *cards, pair_index);
+
+    *center_card = swapped.center_card;
+    *cards = swapped.pair;
+}
+fn get_swap_cards_result(
+    center_card: Card,
+    cards: (Card, Card),
+    pair_index: PairIndex,
+) -> SwapCards {
     match pair_index {
         First => {
-            *center_card = cards.0;
-            cards.0 = temp;
+            SwapCards {
+                center_card: cards.0,
+                pair: (center_card, cards.1),
+            }
         }
         Second => {
-            *center_card = cards.1;
-            cards.1 = temp;
+            SwapCards {
+                center_card: cards.1,
+                pair: (cards.0, center_card),
+            }
         }
     }
+}
+
+struct SwapCards {
+    center_card: Card,
+    pair: (Card, Card),
 }
 
 fn show_pieces(
