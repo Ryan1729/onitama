@@ -30,6 +30,7 @@ pub struct State {
     pub center_card: Card,
     pub cpu_cards: (Card, Card),
     pub turn: Turn,
+    pub show_credits: bool,
     pub ui_context: UIContext,
 }
 

@@ -84,6 +84,7 @@ fn make_state(mut rng: StdRng) -> State {
         center_card,
         cpu_cards,
         turn: Waiting,
+        show_credits: false,
         ui_context: UIContext::new(),
     }
 }
@@ -124,41 +125,112 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
     state.ui_context.frame_init();
 
-    let possible_board_input = show_pieces(
-        platform,
-        state,
-        400,
-        left_mouse_pressed,
-        left_mouse_released,
-    );
+    let first_clicked = !state.show_credits &&
+        do_card_button(
+            platform,
+            &mut state.ui_context,
+            6,
+            32,
+            &state.player_cards.0,
+            120,
+            left_mouse_pressed,
+            left_mouse_released,
+        );
 
-    print_card(platform, 6, 1, &state.cpu_cards.0);
-    print_card(platform, 42, 1, &state.cpu_cards.1);
+    let second_clicked = !state.show_credits &&
+        do_card_button(
+            platform,
+            &mut state.ui_context,
+            42,
+            32,
+            &state.player_cards.1,
+            121,
+            left_mouse_pressed,
+            left_mouse_released,
+        );
 
-    print_card(platform, 2, 16, &state.center_card);
+    let possible_board_input = if state.show_credits {
+        None
+    } else {
+        show_pieces(
+            platform,
+            state,
+            400,
+            left_mouse_pressed,
+            left_mouse_released,
+        )
+    };
 
-    let first_clicked = do_card_button(
+    let credits_spec = ButtonSpec {
+        base: BlankButtonSpec {
+            x: 2,
+            y: 24,
+            w: 16,
+            h: 3,
+            id: 6,
+        },
+        text: (if state.show_credits {
+                   "Hide credits"
+               } else {
+                   "Show credits"
+               }).to_string(),
+    };
+
+    if do_button(
         platform,
         &mut state.ui_context,
-        6,
-        32,
-        &state.player_cards.0,
-        120,
+        &credits_spec,
         left_mouse_pressed,
         left_mouse_released,
-    );
+    )
+    {
+        state.show_credits = !state.show_credits;
+    }
 
-    let second_clicked = do_card_button(
-        platform,
-        &mut state.ui_context,
-        42,
-        32,
-        &state.player_cards.1,
-        121,
-        left_mouse_pressed,
-        left_mouse_released,
-    );
+    if state.show_credits {
+        (platform.print_xy)(
+            3,
+            3,
+            "
+        \"Ninja Head\" by DarkZaitzev
 
+        \"Ninja Mask\" by Lorc
+
+        \"Pagoda\" by Delapouite
+
+        All of the above icons used under CC BY 3.0.
+
+        the cards use a font called Rokkit,
+        which is licensed under the SIL Open Font License",
+        );
+    } else {
+        print_card(platform, 6, 1, &state.cpu_cards.0);
+        print_card(platform, 42, 1, &state.cpu_cards.1);
+
+        print_card(platform, 2, 16, &state.center_card);
+
+        let new_game_spec = ButtonSpec {
+            base: BlankButtonSpec {
+                x: 2,
+                y: 10,
+                w: 11,
+                h: 3,
+                id: 5,
+            },
+            text: "New game".to_string(),
+        };
+
+        if do_button(
+            platform,
+            &mut state.ui_context,
+            &new_game_spec,
+            left_mouse_pressed,
+            left_mouse_released,
+        )
+        {
+            *state = make_state(state.rng);
+        }
+    }
     let t = state.turn;
 
     if let Some(board_input) = possible_board_input {
@@ -372,28 +444,6 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
             }
             Over(winner_colour) => {
                 (platform.print_xy)(10, 14, &format!("{} team wins", winner_colour));
-
-                let new_game_spec = ButtonSpec {
-                    base: BlankButtonSpec {
-                        x: 2,
-                        y: 10,
-                        w: 11,
-                        h: 3,
-                        id: 5,
-                    },
-                    text: "New game".to_string(),
-                };
-
-                if do_button(
-                    platform,
-                    &mut state.ui_context,
-                    &new_game_spec,
-                    left_mouse_pressed,
-                    left_mouse_released,
-                )
-                {
-                    *state = make_state(state.rng);
-                }
             }
         }
     }
