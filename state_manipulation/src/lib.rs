@@ -180,6 +180,17 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                 }
 
                 if get_moves(&state.board, &state.player_cards, Blue).len() == 0 {
+                    if cfg!(debug_assertions) {
+                        println!(
+                            "player swapping {:?} for {:?}",
+                            state.center_card,
+                            match pair_index {
+                                First => state.player_cards.0,
+                                Second => state.player_cards.1,
+                            }
+                        );
+                    }
+
                     swap_cards(&mut state.center_card, &mut state.player_cards, pair_index);
                 }
             }
@@ -228,6 +239,18 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                                 },
                             );
 
+                            if cfg!(debug_assertions) {
+                                println!(
+                                    "player moving from {} to {} with {:?}",
+                                    source_index,
+                                    target_index,
+                                    match pair_index {
+                                        First => state.player_cards.0,
+                                        Second => state.player_cards.1,
+                                    }
+                                );
+                            }
+
                             swap_cards(&mut state.center_card, &mut state.player_cards, pair_index);
 
                             state.turn = winner(&state.board).unwrap_or(CpuTurn);
@@ -262,6 +285,9 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                 }
 
                 if not_moved {
+                    let mut viable_moves = Vec::new();
+                    let mut no_player_capture_moves = Vec::new();
+
                     for &(current_move, pair_index) in moves.iter() {
                         let one_move_board = apply_move(&state.board, current_move);
 
@@ -272,36 +298,47 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                                 blue_wins(&apply_move(&one_move_board, player_move))
                             });
                         if player_has_no_winning_move {
-                            state.board = one_move_board;
+                            viable_moves.push((current_move, pair_index));
 
-                            swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
+                            let before = piece_count_of_colour(&one_move_board, Red);
+                            let player_cannot_capture =
+                                !player_moves.iter().any(|&(player_move, _)| {
+                                    let after = piece_count_of_colour(
+                                        &apply_move(&one_move_board, player_move),
+                                        Red,
+                                    );
 
-                            not_moved = false;
-                            break;
+                                    before > after
+                                });
+
+                            if player_cannot_capture {
+                                no_player_capture_moves.push((current_move, pair_index));
+                            }
                         }
+                    }
+
+                    //TODO prefer moves which capture opponents pieces
+                    //should it prefer no_player_capture_moves to "can_capture_moves"?
+                    //either way it should certainly prefer moves that are in both over
+                    // one or the other.
+
+                    if no_player_capture_moves.len() > 0 {
+                        make_random_cpu_move_from_vec(state, no_player_capture_moves);
+                        not_moved = false;
+                    } else if cfg!(debug_assertions) && not_moved && viable_moves.len() > 0 {
+                        println!("player can capture");
+                    }
+
+                    if not_moved && viable_moves.len() > 0 {
+                        make_random_cpu_move_from_vec(state, viable_moves);
+                        not_moved = false;
+                    } else if cfg!(debug_assertions) && not_moved {
+                        println!("player can win");
                     }
                 }
 
-                //TODO look at each of the player's possible moves and don't make a move if
-                //it would allow the player to capture a piece next turn.
-
                 if not_moved {
-                    let len = moves.len();
-                    if len == 0 {
-                        //can't move so just pick a card to switch
-                        swap_cards(
-                            &mut state.center_card,
-                            &mut state.cpu_cards,
-                            state.rng.gen::<PairIndex>(),
-                        );
-                    } else {
-                        let (random_move, pair_index) = moves[state.rng.gen_range(0, len)];
-
-                        state.board = apply_move(&state.board, random_move);
-
-                        swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
-                    }
-
+                    make_random_cpu_move_from_vec(state, moves);
                 }
 
                 state.turn = winner(&state.board).unwrap_or(Waiting);
@@ -334,11 +371,66 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         }
     }
 
-    if t != state.turn {
-        println!("{:?}", state.turn);
+    if cfg!(debug_assertions) {
+        if t != state.turn {
+            println!("{:?}", state.turn);
+        }
     }
 
     false
+}
+
+fn piece_count_of_colour(board: &Board, piece_colour: PieceColour) -> usize {
+    board
+        .iter()
+        .filter(|p| {
+            p.map(|piece| piece.colour() == piece_colour).unwrap_or(
+                false,
+            )
+        })
+        .count()
+}
+
+fn make_random_cpu_move_from_vec(state: &mut State, moves: Vec<(Move, PairIndex)>) {
+    let len = moves.len();
+    if len == 0 {
+        let chosen_pair_index = state.rng.gen::<PairIndex>();
+        if cfg!(debug_assertions) {
+            println!(
+                "cpu swapping {:?} for {:?}",
+                state.center_card,
+                match chosen_pair_index {
+                    First => state.cpu_cards.0,
+                    Second => state.cpu_cards.1,
+                }
+            );
+        }
+
+        //can't move so just pick a card to switch
+        swap_cards(
+            &mut state.center_card,
+            &mut state.cpu_cards,
+            chosen_pair_index,
+        );
+    } else {
+        let (random_move, pair_index) = moves[state.rng.gen_range(0, len)];
+
+        if cfg!(debug_assertions) {
+            println!(
+                "cpu moving from {} to {} with {:?}",
+                random_move.source_index,
+                random_move.target_index,
+                match pair_index {
+                    First => state.cpu_cards.0,
+                    Second => state.cpu_cards.1,
+                }
+            );
+        }
+
+        state.board = apply_move(&state.board, random_move);
+
+        swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
+    }
 }
 
 fn get_moves(board: &Board, cards: &(Card, Card), colour: PieceColour) -> Vec<(Move, PairIndex)> {
