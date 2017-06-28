@@ -193,6 +193,8 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
             3,
             3,
             "
+        ===Image credits===
+
         \"Ninja Head\" by DarkZaitzev
 
         \"Ninja Mask\" by Lorc
@@ -202,7 +204,12 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
         All of the above icons used under CC BY 3.0.
 
         the cards use a font called Rokkit,
-        which is licensed under the SIL Open Font License",
+        which is licensed under the SIL Open Font License
+
+        see README.md for URLs
+
+        ===Everything else===
+        Ryan Wiedemann (Ryan1729 on github)",
         );
     } else {
         let rotate_spec = ButtonSpec {
