@@ -124,28 +124,6 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
 
     state.ui_context.frame_init();
 
-    let button_spec = ButtonSpec {
-        base: BlankButtonSpec {
-            x: 2,
-            y: 10,
-            w: 11,
-            h: 3,
-            id: 1,
-        },
-        text: "Button".to_string(),
-    };
-
-    if do_button(
-        platform,
-        &mut state.ui_context,
-        &button_spec,
-        left_mouse_pressed,
-        left_mouse_released,
-    )
-    {
-        println!("Button pushed!");
-    }
-
     let possible_board_input = show_pieces(
         platform,
         state,
@@ -194,14 +172,18 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                     state.turn = SelectedCard(Second);
                 }
             }
-            SelectedCard(_) => {
+            SelectedCard(pair_index) => {
                 if first_clicked {
                     state.turn = SelectedCard(First);
                 } else if second_clicked {
                     state.turn = SelectedCard(Second);
                 }
+
+                if get_moves(&state.board, &state.player_cards, Blue).len() == 0 {
+                    swap_cards(&mut state.center_card, &mut state.player_cards, pair_index);
+                }
             }
-            SelectedPiece(pair_index, piece_index) => {
+            SelectedPiece(pair_index, source_index) => {
                 if first_clicked {
                     state.turn = SelectedCard(First);
                 } else if second_clicked {
@@ -217,7 +199,7 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                             First => &state.player_cards.0,
                             Second => &state.player_cards.1,
                         },
-                        piece_index,
+                        source_index,
                         Blue,
                     ).iter()
                 {
@@ -237,24 +219,18 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                         left_mouse_released,
                     ) && have_not_moved
                     {
-                        if let Some(board_index) = get_board_index(x_usize, y_usize) {
-                            let piece = state.board[piece_index];
-                            state.board[board_index] = piece;
-                            state.board[piece_index] = None;
+                        if let Some(target_index) = get_board_index(x_usize, y_usize) {
+                            state.board = apply_move(
+                                &state.board,
+                                Move {
+                                    source_index,
+                                    target_index,
+                                },
+                            );
 
-                            let temp = state.center_card;
-                            match pair_index {
-                                First => {
-                                    state.center_card = state.player_cards.0;
-                                    state.player_cards.0 = temp;
-                                }
-                                Second => {
-                                    state.center_card = state.player_cards.1;
-                                    state.player_cards.1 = temp;
-                                }
-                            }
+                            swap_cards(&mut state.center_card, &mut state.player_cards, pair_index);
 
-                            state.turn = CpuTurn;
+                            state.turn = winner(&state.board).unwrap_or(CpuTurn);
 
                             have_not_moved = false;
                         }
@@ -268,8 +244,74 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
                 }
             }
             CpuTurn => {
-                //TODO
-                state.turn = Waiting;
+                let moves = get_moves(&state.board, &state.cpu_cards, Red);
+
+                let mut not_moved = true;
+
+                for &(current_move, pair_index) in moves.iter() {
+                    let new_board = apply_move(&state.board, current_move);
+
+                    if red_wins(&new_board) {
+                        state.board = new_board;
+
+                        swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
+
+                        not_moved = false;
+                        break;
+                    }
+                }
+
+                //TODO look at each of the player's possible moves and don't make a move if
+                //it would allow the player to win next turn.
+
+                //TODO look at each of the player's possible moves and don't make a move if
+                //it would allow the player to capture a piece next turn.
+
+                if not_moved {
+                    let len = moves.len();
+                    if len == 0 {
+                        //can't move so just pick a card to switch
+                        swap_cards(
+                            &mut state.center_card,
+                            &mut state.cpu_cards,
+                            state.rng.gen::<PairIndex>(),
+                        );
+                    } else {
+                        let (random_move, pair_index) = moves[state.rng.gen_range(0, len)];
+
+                        state.board = apply_move(&state.board, random_move);
+
+                        swap_cards(&mut state.center_card, &mut state.cpu_cards, pair_index);
+                    }
+
+                }
+
+                state.turn = winner(&state.board).unwrap_or(Waiting);
+            }
+            Over(winner_colour) => {
+                (platform.print_xy)(10, 14, &format!("{} team wins", winner_colour));
+
+                let new_game_spec = ButtonSpec {
+                    base: BlankButtonSpec {
+                        x: 2,
+                        y: 10,
+                        w: 11,
+                        h: 3,
+                        id: 5,
+                    },
+                    text: "New game".to_string(),
+                };
+
+                if do_button(
+                    platform,
+                    &mut state.ui_context,
+                    &new_game_spec,
+                    left_mouse_pressed,
+                    left_mouse_released,
+                )
+                {
+                    *state = make_state(state.rng);
+                }
             }
         }
     }
@@ -279,6 +321,111 @@ pub fn update_and_render(platform: &Platform, state: &mut State, events: &mut Ve
     }
 
     false
+}
+
+fn get_moves(board: &Board, cards: &(Card, Card), colour: PieceColour) -> Vec<(Move, PairIndex)> {
+    let pieces = get_piece_indices(board, colour);
+
+    let mut result = Vec::new();
+
+    for piece in pieces.iter() {
+        result.extend(valid_moves(board, &cards.0, *piece, colour).iter().map(
+            |m| {
+                (*m, First)
+            },
+        ));
+        result.extend(valid_moves(board, &cards.1, *piece, colour).iter().map(
+            |m| {
+                (*m, Second)
+            },
+        ));
+    }
+
+    result
+}
+
+fn get_piece_indices(board: &Board, colour: PieceColour) -> Vec<usize> {
+    board
+        .iter()
+        .enumerate()
+        .filter_map(|(index, piece)| {
+            piece.and_then(|p| if p.colour() == colour {
+                Some(index)
+            } else {
+                None
+            })
+
+        })
+        .collect()
+}
+
+fn winner(board: &Board) -> Option<Turn> {
+    if blue_wins(board) {
+        Some(Over(Blue))
+    } else if red_wins(board) {
+        Some(Over(Red))
+    } else {
+        None
+    }
+}
+
+fn blue_wins(board: &Board) -> bool {
+    if let Some(master_index) = get_master_index(board, Blue) {
+        master_index == TOP_PAGODA_INDEX || get_master_index(board, Red).is_none()
+    } else {
+        false
+    }
+}
+fn red_wins(board: &Board) -> bool {
+    if let Some(master_index) = get_master_index(board, Red) {
+        master_index == BOTTOM_PAGODA_INDEX || get_master_index(board, Blue).is_none()
+    } else {
+        false
+    }
+}
+
+fn get_master_index(board: &Board, colour: PieceColour) -> Option<usize> {
+    match colour {
+        Red => {
+            board.iter().position(|p| match *p {
+                Some(RedMaster) => true,
+                _ => false,
+            })
+        }
+        Blue => {
+            board.iter().position(|p| match *p {
+                Some(BlueMaster) => true,
+                _ => false,
+            })
+        }
+    }
+}
+
+
+
+//maybe this should also handle card switcing as well?
+fn apply_move(board: &Board, current_move: Move) -> Board {
+    let mut result = board.clone();
+
+    let piece = result[current_move.source_index];
+    result[current_move.target_index] = piece;
+    result[current_move.source_index] = None;
+
+    result
+}
+
+fn swap_cards(center_card: &mut Card, cards: &mut (Card, Card), pair_index: PairIndex) {
+    let temp = *center_card;
+    match pair_index {
+        First => {
+            *center_card = cards.0;
+            cards.0 = temp;
+        }
+        Second => {
+            *center_card = cards.1;
+            cards.1 = temp;
+        }
+    }
 }
 
 fn show_pieces(

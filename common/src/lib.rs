@@ -2,7 +2,7 @@ extern crate rand;
 
 use std::fmt;
 
-use rand::StdRng;
+use rand::{Rand, Rng, StdRng};
 
 pub struct Platform {
     pub print_xy: fn(i32, i32, &str),
@@ -39,12 +39,20 @@ pub enum Turn {
     SelectedCard(PairIndex),
     SelectedPiece(PairIndex, usize),
     CpuTurn,
+    Over(PieceColour),
 }
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum PairIndex {
     First,
     Second,
+}
+use PairIndex::*;
+
+impl Rand for PairIndex {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        if rng.gen::<bool>() { First } else { Second }
+    }
 }
 
 pub trait AllValues {
@@ -122,6 +130,12 @@ impl AllValues for Card {
 
 pub type Board = [Option<Piece>; 25];
 
+#[derive(Debug, Copy, Clone)]
+pub struct Move {
+    pub source_index: usize,
+    pub target_index: usize,
+}
+
 pub fn valid_move_locations(
     board: &Board,
     card: &Card,
@@ -132,12 +146,50 @@ pub fn valid_move_locations(
 
     if is_index_on_board(piece_index) {
         if let Some((x, y)) = get_board_xy(piece_index) {
-            for &(x_1, y_1) in get_offsets(card).iter() {
+            for &(mut x_1, mut y_1) in get_offsets(card).iter() {
+                if piece_colour == Red {
+                    x_1 *= -1;
+                    y_1 *= -1;
+                }
+
                 let result_x = (x as isize).wrapping_add(x_1) as usize;
                 let result_y = (y as isize).wrapping_add(y_1) as usize;
                 if let Some(target_index) = get_board_index(result_x, result_y) {
-                    if board[target_index].map(Piece::piece_colour) != Some(piece_colour) {
+                    if board[target_index].map(Piece::colour) != Some(piece_colour) {
                         result.push((result_x, result_y));
+                    }
+                }
+            }
+        }
+    }
+
+    result
+}
+//TODO reduce duplication
+pub fn valid_moves(
+    board: &Board,
+    card: &Card,
+    piece_index: usize,
+    piece_colour: PieceColour,
+) -> Vec<Move> {
+    let mut result = Vec::new();
+
+    if is_index_on_board(piece_index) {
+        if let Some((x, y)) = get_board_xy(piece_index) {
+            for &(mut x_1, mut y_1) in get_offsets(card).iter() {
+                if piece_colour == Red {
+                    x_1 *= -1;
+                    y_1 *= -1;
+                }
+
+                let result_x = (x as isize).wrapping_add(x_1) as usize;
+                let result_y = (y as isize).wrapping_add(y_1) as usize;
+                if let Some(target_index) = get_board_index(result_x, result_y) {
+                    if board[target_index].map(Piece::colour) != Some(piece_colour) {
+                        result.push(Move {
+                            source_index: piece_index,
+                            target_index,
+                        });
                     }
                 }
             }
@@ -155,7 +207,7 @@ fn get_offsets(card: &Card) -> Vec<(isize, isize)> {
         Crane => vec![(-1, 1), (1, 1), (0, -1)],
         Dragon => vec![(-1, 1), (1, 1), (-2, -1), (2, -1)],
         Elephant => vec![(-1, 0), (1, 0), (-1, -1), (1, -1)],
-        Mantis => vec![(-1, -1), (-1, 1), (0, 1)],
+        Mantis => vec![(-1, -1), (1, -1), (0, 1)],
         Boar => vec![(-1, 0), (1, 0), (0, -1)],
         Frog => vec![(-2, 0), (-1, -1), (1, 1)],
         Goose => vec![(-1, 0), (-1, -1), (1, 0), (1, 1)],
@@ -169,7 +221,7 @@ fn get_offsets(card: &Card) -> Vec<(isize, isize)> {
 }
 
 pub fn get_board_index(x: usize, y: usize) -> Option<usize> {
-    let result = y * 5 + x;
+    let result = y.saturating_mul(5).saturating_add(x);
 
     if is_index_on_board(result) {
         Some(result)
@@ -227,7 +279,7 @@ impl Piece {
             _ => false,
         }
     }
-    pub fn piece_colour(self) -> PieceColour {
+    pub fn colour(self) -> PieceColour {
         match self {
             BlueStudent | BlueMaster => Blue,
             RedStudent | RedMaster => Red,
@@ -241,6 +293,19 @@ pub enum PieceColour {
     Blue,
 }
 use PieceColour::*;
+
+impl fmt::Display for PieceColour {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                Red => "Red",
+                Blue => "Blue",
+            }
+        )
+    }
+}
 
 pub type UiId = i32;
 
