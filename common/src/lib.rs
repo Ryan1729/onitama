@@ -221,6 +221,10 @@ fn get_offsets(card: &Card) -> Vec<(isize, isize)> {
 }
 
 pub fn get_board_index(x: usize, y: usize) -> Option<usize> {
+    if !xy_on_board(x, y) {
+        return None;
+    }
+
     let result = y.saturating_mul(5).saturating_add(x);
 
     if is_index_on_board(result) {
@@ -231,8 +235,14 @@ pub fn get_board_index(x: usize, y: usize) -> Option<usize> {
 }
 
 pub fn get_board_xy(index: usize) -> Option<(usize, usize)> {
-    if is_index_on_board(index) {
-        Some((index % 5, index / 5))
+    if !is_index_on_board(index) {
+        return None;
+    }
+
+    let result = (index % 5, index / 5);
+
+    if xy_on_board(result.0, result.1) {
+        Some(result)
     } else {
         None
     }
@@ -244,20 +254,40 @@ extern crate quickcheck;
 
 #[cfg(test)]
 mod board_indices {
-    use get_board_index;
-    use get_board_xy;
+    use ::*;
 
     quickcheck! {
-      fn prop(i: usize) -> bool {
-          i == get_board_xy(i).and_then(|(x,y)|
-            get_board_index(x,y)
-      ).unwrap_or(i)
+        fn i_xy_i(i: usize) -> bool {
+              let expected = if is_index_on_board(i) {
+                  Some(i)
+              } else {
+                  None
+              };
+
+              expected == get_board_xy(i).and_then(|(x,y)| get_board_index(x,y))
+        }
+    }
+
+    quickcheck! {
+      fn xy_i_xy(x: usize, y: usize) -> bool {
+           let expected = if xy_on_board(x, y) {
+               Some((x, y))
+           } else {
+               None
+           };
+
+           expected == get_board_index(x,y).and_then(|i| get_board_xy(i))
       }
   }
+
 }
 
 fn is_index_on_board(piece_index: usize) -> bool {
     piece_index < 25
+}
+
+fn xy_on_board(x: usize, y: usize) -> bool {
+    x < 5 && y < 5
 }
 
 pub const TOP_PAGODA_INDEX: usize = 2;
