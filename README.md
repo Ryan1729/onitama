@@ -1,19 +1,21 @@
 This is a single player only version of the board game [Onitama](www.arcanewonders.com/onitama). (I'd like to be able to link to a website for the japanese version as well but I can't seem to find one!)
 You can find the english version of the rules [here](http://www.arcanewonders.com/resources/Onitama_Rulebook.PDF).
 
+![demo gif](/demo.gif?raw=true "Demo gif")
+
 ## Image info and credits
-    red used: #732e2c
-    blue used: #2b6388
+red used: #732e2c
+blue used: #2b6388
 
-    "Ninja Head" by [DarkZaitzev](http://game-icons.net/darkzaitzev/originals/ninja-head.html)
+"Ninja Head" by [DarkZaitzev](http://game-icons.net/darkzaitzev/originals/ninja-head.html)
 
-    "Ninja Mask" by [Lorc](http://game-icons.net/lorc/originals/ninja-mask.html)
+"Ninja Mask" by [Lorc](http://game-icons.net/lorc/originals/ninja-mask.html)
 
-    "Pagoda" by [Delapouite](http://game-icons.net/delapouite/originals/pagoda.html)
+"Pagoda" by [Delapouite](http://game-icons.net/delapouite/originals/pagoda.html)
 
-    All of the above icons used under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
+All of the above icons used under [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)
 
-    the cards use a font called [Rokkit](https://www.fontzillion.com/fonts/new-typography/rokkitt), which is licensed under the [SIL Open Font License](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
+the cards use a font called [Rokkit](https://www.fontzillion.com/fonts/new-typography/rokkitt), which is licensed under the [SIL Open Font License](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL)
 
 ## Installing required lib on Linux
 
